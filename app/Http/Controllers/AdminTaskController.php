@@ -33,9 +33,10 @@ class AdminTaskController extends Controller
 
     public function indexByProject($project_id)
     {
-        $project = Project::with(['divisions.tasks.assignee'])->findOrFail($project_id);
+        $project = Project::with(['divisions.tasks.assignee', 'tasks.division', 'tasks.assignee'])->findOrFail($project_id);
+        $timelineData = $this->milestoneService->buildProjectTimeline($project);
         
-        return view('admin.tasks.index', compact('project'));
+        return view('admin.tasks.index', compact('project', 'timelineData'));
     }
 
     public function create()
@@ -155,6 +156,8 @@ class AdminTaskController extends Controller
             } catch (\Exception $e) {
                 Log::error("Gagal regenerate milestone: " . $e->getMessage());
             }
+        } else {
+            $this->milestoneService->syncProjectMilestoneStatuses($task->project_id);
         }
 
         return redirect()->route('admin.tasks.index.by.project', $task->project_id)

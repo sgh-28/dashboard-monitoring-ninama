@@ -17,6 +17,12 @@
         </a>
     </div>
 
+    @isset($timelineData)
+        <div class="mb-6">
+            @include('components.project-milestone-timeline', ['timelineData' => $timelineData])
+        </div>
+    @endisset
+
     {{-- TAMPILAN PER DIVISI --}}
     @if($project->divisions->count() > 0)
         @foreach($project->divisions as $division)

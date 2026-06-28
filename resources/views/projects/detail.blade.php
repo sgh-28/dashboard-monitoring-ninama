@@ -28,6 +28,12 @@
         </span>
     </div>
 
+    @isset($timelineData)
+        <div class="mb-6">
+            @include('components.project-milestone-timeline', ['timelineData' => $timelineData])
+        </div>
+    @endisset
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {{-- KOLOM KIRI: PROGRESS DETAILS --}}
