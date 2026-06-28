@@ -62,24 +62,51 @@ class GoogleCalendarService
         file_put_contents($this->tokenPath, json_encode($token));
     }
 
-    public function createEvent($title, $date)
+    public static function isConnected(): bool
+    {
+        $tokenPath = storage_path('app/google-token.json');
+
+        if (!file_exists($tokenPath)) {
+            return false;
+        }
+
+        $savedToken = json_decode(file_get_contents($tokenPath), true);
+
+        return is_array($savedToken) && isset($savedToken['access_token']);
+    }
+
+    public function createEvent($title, $date, $attendeeEmail = null, $description = null)
     {
         try {
-            $event = new Calendar\Event([
-                'summary' => $title,
-                'start' => ['date' => $date],
-                'end'   => ['date' => $date],
+            $eventData = [
+                'summary'     => $title,
+                'description' => $description ?? '',
+                'start'       => ['date' => $date],
+                'end'         => ['date' => $date],
+            ];
+
+            // Tambahkan pegawai sebagai attendee agar undangan masuk ke Google Calendar mereka
+            if ($attendeeEmail) {
+                $eventData['attendees'] = [
+                    ['email' => $attendeeEmail]
+                ];
+            }
+
+            $event = new Calendar\Event($eventData);
+
+            // sendUpdates='all' agar Google otomatis mengirimkan email undangan ke pegawai
+            $createdEvent = $this->service->events->insert('primary', $event, [
+                'sendUpdates' => 'all',
             ]);
 
-            $createdEvent = $this->service->events->insert('primary', $event);
-
             return [
-                'status' => 'success',
+                'status'     => 'success',
+                'event_id'   => $createdEvent->id,
                 'event_link' => $createdEvent->htmlLink,
             ];
         } catch (Exception $e) {
             return [
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => $e->getMessage(),
             ];
         }
@@ -118,5 +145,29 @@ class GoogleCalendarService
         $this->saveTokenToFile($accessToken);
 
         return $accessToken;
+    }
+
+    public function disconnect(): bool
+    {
+        try {
+            if (file_exists($this->tokenPath)) {
+                $savedToken = json_decode(file_get_contents($this->tokenPath), true);
+                $tokenToRevoke = $savedToken['refresh_token'] ?? $savedToken['access_token'] ?? null;
+
+                if ($tokenToRevoke) {
+                    $this->client->revokeToken($tokenToRevoke);
+                }
+
+                return @unlink($this->tokenPath);
+            }
+
+            return true;
+        } catch (Exception $e) {
+            if (file_exists($this->tokenPath)) {
+                @unlink($this->tokenPath);
+            }
+
+            return false;
+        }
     }
 }

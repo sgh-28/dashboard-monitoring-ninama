@@ -18,8 +18,8 @@ class GoogleAuthController extends Controller
         if ($code) {
             $service = new GoogleCalendarService();
             $service->saveToken($code);
-            return redirect()->route('dashboard')->with('success', 'Google Calendar terhubung berhasil!');
+            return redirect()->route('main.dashboard')->with('success', 'Google Calendar berhasil terhubung! Sistem siap membuat event otomatis.');
         }
-        return redirect()->route('dashboard')->with('error', 'Koneksi Google Calendar gagal.');
+        return redirect()->route('main.dashboard')->with('error', 'Koneksi Google Calendar gagal.');
     }
 }

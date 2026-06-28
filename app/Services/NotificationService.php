@@ -181,24 +181,54 @@ class NotificationService
     }
 
     /**
-     * Buat Google Calendar Event
+     * Buat Google Calendar Event & undang pegawai via email
      */
     private function createCalendarEvent(User $user, ProjectTask $task): bool
     {
-        // TODO: Implementasi Google Calendar API
-        // Untuk sekarang, kita log saja
-        Log::info("Calendar event created for task {$task->id}");
-        
-        Notification::create([
-            'user_id' => $user->id,
-            'project_task_id' => $task->id,
-            'title' => 'Calendar Event Created',
-            'message' => "Event: {$task->title}",
-            'channel' => 'calendar',
-            'status' => 'sent',
-        ]);
+        try {
+            $calendarService = new \App\Services\GoogleCalendarService();
 
-        return true;
+            $projectName = $task->project->name ?? 'Proyek';
+            $deadline    = $task->deadline ? $task->deadline->format('Y-m-d') : date('Y-m-d');
+            $title       = "[TASK] {$task->title} — {$projectName}";
+            $description = "Tugas: {$task->title}\nProyek: {$projectName}\nDitugaskan kepada: {$user->name}\nDeadline: {$task->deadline?->format('d/m/Y')}";
+
+            // Buat event di kalender Admin & undang pegawai via email mereka
+            $result  = $calendarService->createEvent($title, $deadline, $user->email, $description);
+            $success = $result['status'] === 'success';
+
+            Notification::create([
+                'user_id'         => $user->id,
+                'project_task_id' => $task->id,
+                'title'           => 'Calendar Event Created',
+                'message'         => $success
+                    ? "Event dibuat. Link: " . ($result['event_link'] ?? '-')
+                    : ($result['message'] ?? 'Gagal'),
+                'channel'         => 'calendar',
+                'status'          => $success ? 'sent' : 'failed',
+            ]);
+
+            if ($success) {
+                Log::info("Google Calendar event dibuat untuk task #{$task->id}, diundang: {$user->email}");
+            } else {
+                Log::warning("Gagal buat Google Calendar event: " . ($result['message'] ?? 'unknown'));
+            }
+
+            return $success;
+        } catch (\Exception $e) {
+            Log::error('Google Calendar Error: ' . $e->getMessage());
+
+            Notification::create([
+                'user_id'         => $user->id,
+                'project_task_id' => $task->id,
+                'title'           => 'Calendar Event Failed',
+                'message'         => $e->getMessage(),
+                'channel'         => 'calendar',
+                'status'          => 'failed',
+            ]);
+
+            return false;
+        }
     }
 
     /**
