@@ -36,9 +36,11 @@ Route::get('/home', function () {
     return redirect()->route('main.dashboard');
 })->middleware('auth');
 
-// ==================== GOOGLE CALENDAR OAUTH ROUTES ====================
-Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+// ==================== GOOGLE CALENDAR OAUTH ROUTES (Harus Login Dulu) ====================
+Route::middleware(['auth', 'role:super_admin'])->group(function () {
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+});
 
 // ==================== TEST INTEGRATION ====================
 Route::middleware(['auth', 'throttle:5,1'])->group(function () {
@@ -73,7 +75,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // ==================== MARKETING ROUTES (Penawaran) ====================
-    Route::prefix('marketing')->name('marketing.')->group(function () {
+    Route::middleware(['role:marketing'])->prefix('marketing')->name('marketing.')->group(function () {
         Route::get('/', [MarketingOfferController::class, 'index'])->name('index');
         Route::get('/create', [MarketingOfferController::class, 'create'])->name('create');
         Route::post('/', [MarketingOfferController::class, 'store'])->name('store');
@@ -112,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
     // Employee/Marketing Task Management (For assigned users only)
     Route::middleware(['role:pegawai,marketing'])->prefix('my-tasks')->name('employee.tasks.')->group(function () {
         Route::get('/', [EmployeeTaskController::class, 'index'])->name('index');
+        Route::post('/projects/{project}/complete', [EmployeeTaskController::class, 'completeProject'])->name('projects.complete');
         Route::get('/{task}', [EmployeeTaskController::class, 'show'])->name('show');
         Route::get('/{task}/submit', [EmployeeTaskController::class, 'submitForm'])->name('submit.form');
         Route::post('/{task}/submit', [EmployeeTaskController::class, 'submit'])->name('submit');
@@ -141,9 +144,9 @@ Route::middleware(['auth'])->group(function () {
         
         Route::prefix('marketing')->name('marketing.')->group(function () {
             Route::get('/', [AdminMarketingController::class, 'index'])->name('index');
-            Route::get('/{offer}', [AdminMarketingController::class, 'show'])->name('show');
             Route::get('/export', [AdminMarketingController::class, 'exportMarketing'])->name('export');
             Route::get('/{category}/export', [AdminMarketingController::class, 'exportMarketing'])->name('export.category');
+            Route::get('/{offer}', [AdminMarketingController::class, 'show'])->name('show');
         });
         
         Route::prefix('projects')->name('projects.')->group(function () {
