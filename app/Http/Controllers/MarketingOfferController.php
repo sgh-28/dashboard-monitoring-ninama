@@ -11,13 +11,44 @@ class MarketingOfferController extends Controller
     /**
      * Tampilkan daftar penawaran milik marketing yang sedang login
      */
-    public function index()
+    public function index(Request $request)
     {
-        $offers = MarketingOffer::where('employee_id', Auth::id())
-            ->orderByDesc('created_at')
-            ->get();
+        $query = MarketingOffer::with([
+                'employee',
+                'project' => fn ($projectQuery) => $projectQuery->withCount(['divisions', 'tasks']),
+            ]);
 
-        return view('marketing.index', compact('offers'));
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                    ->orWhere('contact_person', 'like', "%{$search}%")
+                    ->orWhere('company_address', 'like', "%{$search}%");
+            });
+        }
+
+        $statsBase = MarketingOffer::query();
+        $stats = [
+            'total' => (clone $statsBase)->count(),
+            'active' => (clone $statsBase)->whereIn('status', ['penawaran', 'follow_up', 'meeting', 'menunggu_keputusan', 'negosiasi', 'pending'])->count(),
+            'deal' => (clone $statsBase)->where('status', 'deal')->count(),
+            'needs_account' => (clone $statsBase)->where('status', 'deal')->whereNull('project_id')->count(),
+            'rejected' => (clone $statsBase)->whereIn('status', ['rejected', 'no_response'])->count(),
+        ];
+
+        $offers = $query->orderByDesc('offer_date')
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        return view('marketing.index', compact('offers', 'stats'));
     }
 
     /**
@@ -36,22 +67,19 @@ class MarketingOfferController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'company_address' => 'required|string',
-            'contact_person' => 'nullable|string|max:255',
-            'contact_phone' => 'nullable|string|max:50',
+            'contact_person' => 'required|string|max:255',
+            'contact_position' => 'required|string|max:255',
+            'contact_phone' => 'required|string|max:50',
             'contact_email' => 'nullable|email|max:255',
             'category' => 'required|in:web,internet,cctv',
             'offer_description' => 'nullable|string',
             'estimated_value' => 'nullable|numeric|min:0',
             'offer_date' => 'required|date',
-            'follow_up_date' => 'nullable|date',
-            'meeting_date' => 'nullable|date',
-            'status' => 'required|in:penawaran,follow_up,meeting,menunggu_keputusan,negosiasi,deal,pending,rejected,no_response',
-            'reason' => 'nullable|string',
-            'notes' => 'nullable|string',
         ]);
 
         // Tambahkan ID user yang sedang login
         $validated['employee_id'] = Auth::id();
+        $validated['status'] = 'penawaran';
 
         MarketingOffer::create($validated);
 
@@ -82,8 +110,9 @@ class MarketingOfferController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'company_address' => 'required|string',
-            'contact_person' => 'nullable|string|max:255',
-            'contact_phone' => 'nullable|string|max:50',
+            'contact_person' => 'required|string|max:255',
+            'contact_position' => 'required|string|max:255',
+            'contact_phone' => 'required|string|max:50',
             'contact_email' => 'nullable|email|max:255',
             'category' => 'required|in:web,internet,cctv',
             'offer_description' => 'nullable|string',

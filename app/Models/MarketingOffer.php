@@ -14,6 +14,7 @@ class MarketingOffer extends Model
         'company_name',
         'company_address',
         'contact_person',
+        'contact_position',
         'contact_phone',
         'contact_email',
         'category',
