@@ -34,18 +34,23 @@ class AdminUserController extends Controller
 
     public function store(Request $request, WhatsAppService $whatsAppService)
     {
+        $role = Role::find($request->role_id);
+        $isPegawai = $role?->name === 'pegawai';
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'required|string|max:20',
-            'bidang' => 'nullable|in:web,internet,cctv',
-            'jabatan' => 'required|string|max:255',
+            'bidang' => [$isPegawai ? 'required' : 'nullable', 'in:web,internet,cctv'],
+            'jabatan' => [$isPegawai ? 'required' : 'nullable', 'string', 'max:255'],
         ]);
 
         $rawPassword = $validated['password'];
         $validated['password'] = Hash::make($validated['password']);
+        $validated['bidang'] = $isPegawai ? $validated['bidang'] : null;
+        $validated['jabatan'] = $isPegawai ? $validated['jabatan'] : 'Marketing';
 
         $user = User::create($validated);
 
@@ -80,14 +85,17 @@ class AdminUserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $role = Role::find($request->role_id);
+        $isPegawai = $role?->name === 'pegawai';
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'nullable|string|max:20',
-            'bidang' => 'nullable|in:web,internet,cctv',
-            'jabatan' => 'required|string|max:255',
+            'bidang' => [$isPegawai ? 'required' : 'nullable', 'in:web,internet,cctv'],
+            'jabatan' => [$isPegawai ? 'required' : 'nullable', 'string', 'max:255'],
         ]);
 
         if (!empty($validated['password'])) {
@@ -95,6 +103,9 @@ class AdminUserController extends Controller
         } else {
             unset($validated['password']);
         }
+
+        $validated['bidang'] = $isPegawai ? $validated['bidang'] : null;
+        $validated['jabatan'] = $isPegawai ? $validated['jabatan'] : 'Marketing';
 
         $user->update($validated);
 
