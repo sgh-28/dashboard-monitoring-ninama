@@ -13,19 +13,7 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        $stats = [
-            'total_tasks' => \App\Models\ProjectTask::where('assigned_to', Auth::id())->count(),
-            'completed_tasks' => \App\Models\ProjectTask::where('assigned_to', Auth::id())->where('status', 'done')->count(),
-            'pending_tasks' => \App\Models\ProjectTask::where('assigned_to', Auth::id())->whereIn('status', ['pending', 'ongoing'])->count(),
-        ];
-
-        $recentTasks = \App\Models\ProjectTask::where('assigned_to', Auth::id())
-            ->with(['project', 'division'])
-            ->orderByDesc('deadline')
-            ->limit(5)
-            ->get();
-
-        return view('employee.dashboard', compact('stats', 'recentTasks'));
+        return redirect()->route('employee.tasks.index');
     }
 
     /**

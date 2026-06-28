@@ -5,7 +5,7 @@
 @section('content')
 <div class="p-6 max-w-4xl mx-auto">
     <div class="mb-6">
-        <a href="{{ route('employee.dashboard') }}" class="text-blue-400 hover:underline text-sm">← Kembali ke Dashboard</a>
+        <a href="{{ route('employee.tasks.index') }}" class="text-blue-400 hover:underline text-sm">← Kembali ke Daftar Tugas</a>
     </div>
 
     @php
@@ -135,7 +135,7 @@
             📤 Tandai Selesai
         </a>
         
-        <a href="{{ route('employee.dashboard') }}" 
+        <a href="{{ route('employee.tasks.index') }}" 
            class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition font-medium">
             Kembali
         </a>

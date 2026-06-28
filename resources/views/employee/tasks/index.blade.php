@@ -9,10 +9,55 @@
             <h1 class="text-2xl font-bold text-white">📋 Daftar Tugas Saya</h1>
             <p class="text-gray-400 text-sm">Semua tugas yang ditugaskan kepada Anda</p>
         </div>
-        <a href="{{ route('employee.dashboard') }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition text-sm">
-            ← Kembali ke Dashboard
-        </a>
     </div>
+
+    @if(isset($managedProjects) && $managedProjects->count() > 0)
+        <div class="bg-gray-800 rounded-lg border border-gray-700 p-5 mb-6">
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Verifikasi Project Management</h2>
+                    <p class="text-sm text-gray-400">Tandai proyek selesai setelah seluruh task pegawai selesai dan sudah dicek.</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                @foreach($managedProjects as $project)
+                    @php
+                        $totalTasks = $project->tasks_count;
+                        $completedTasks = $project->completed_tasks_count;
+                        $allTasksDone = $totalTasks > 0 && $completedTasks === $totalTasks;
+                        $projectProgress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+                    @endphp
+
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-700/40 border border-gray-600 rounded-lg p-4">
+                        <div class="flex-1">
+                            <p class="font-medium text-white">{{ $project->name }}</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                {{ $completedTasks }}/{{ $totalTasks }} task selesai
+                                <span class="mx-2">|</span>
+                                Status: {{ ucfirst(str_replace('_', ' ', $project->status)) }}
+                            </p>
+                            <div class="mt-3 flex items-center gap-2 max-w-sm">
+                                <div class="flex-1 bg-gray-800 rounded-full h-2">
+                                    <div class="h-2 rounded-full {{ $allTasksDone ? 'bg-green-500' : 'bg-blue-500' }}" style="width: {{ $projectProgress }}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-300">{{ $projectProgress }}%</span>
+                            </div>
+                        </div>
+
+                        <form action="{{ route('employee.tasks.projects.complete', $project) }}" method="POST" onsubmit="return confirm('Tandai proyek ini selesai? Pastikan semua task sudah dicek.')" class="shrink-0">
+                            @csrf
+                            <button type="submit"
+                                    class="px-4 py-2 text-sm rounded-lg transition font-medium {{ $allTasksDone ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-600 text-gray-300 cursor-not-allowed' }}"
+                                    {{ $allTasksDone ? '' : 'disabled' }}>
+                                Tandai Proyek Selesai
+                            </button>
+                        </form>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     {{-- FILTER TABS --}}
     @php
