@@ -36,16 +36,14 @@
             // ✅ PERBAIKAN: Hitung statistik per kategori (Exclude 'rejected')
             $categoryStats = [];
             foreach($categories as $key => $label) {
-                $total = \App\Models\Project::where('category', $key)->where('status', '!=', 'rejected')->count();
+                $total = \App\Models\Project::where('category', $key)->whereIn('status', ['ongoing', 'done'])->count();
                 $ongoing = \App\Models\Project::where('category', $key)->where('status', 'ongoing')->count();
                 $done = \App\Models\Project::where('category', $key)->where('status', 'done')->count();
-                $offer = \App\Models\Project::where('category', $key)->whereIn('status', ['offer', 'progress_offer', 'pending'])->count();
                 
                 $categoryStats[$key] = [
                     'total' => $total,
                     'ongoing' => $ongoing,
                     'done' => $done,
-                    'offer' => $offer,
                 ];
             }
         @endphp
@@ -84,13 +82,6 @@
                         <span class="text-gray-400">Selesai</span>
                     </div>
                     <p class="font-bold text-green-400 text-sm">{{ $categoryStats[$key]['done'] }}</p>
-                </div>
-                <div class="text-center flex-1">
-                    <div class="flex items-center justify-center gap-1.5 mb-1">
-                        <span class="w-3 h-3 rounded-full" style="background-color: #eab308;"></span>
-                        <span class="text-gray-400">Offer</span>
-                    </div>
-                    <p class="font-bold text-yellow-400 text-sm">{{ $categoryStats[$key]['offer'] }}</p>
                 </div>
             </div>
 
@@ -174,8 +165,6 @@
                         <option value="">Semua Status</option>
                         <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
                         <option value="done" {{ request('status') == 'done' ? 'selected' : '' }}>Selesai</option>
-                        <option value="offer" {{ request('status') == 'offer' ? 'selected' : '' }}>Offer</option>
-                        <option value="progress_offer" {{ request('status') == 'progress_offer' ? 'selected' : '' }}>Progress Offer</option>
                     </select>
                 </div>
                 
@@ -211,7 +200,7 @@
                         @php
                             $deadline = $project->deadline ? \Carbon\Carbon::parse($project->deadline) : null;
                             $isOverdue = $deadline && $deadline->isPast() && $project->status !== 'done';
-                            $daysOverdue = $isOverdue ? $deadline->diffInDays(now()) : 0;
+                            $daysOverdue = $isOverdue ? (int) $deadline->copy()->startOfDay()->diffInDays(now()->startOfDay()) : 0;
                         @endphp
                         
                         <tr class="hover:bg-gray-700/50 transition {{ $isOverdue ? 'bg-red-900/10 border-l-4 border-red-500' : '' }}">
@@ -288,6 +277,134 @@
             </table>
         </div>
     </div>
+
+    {{-- MARKETING REPORT PREVIEW --}}
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mt-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-white">Laporan Marketing Terbaru</h3>
+                <p class="text-sm text-gray-400">Terintegrasi dengan status penawaran marketing, project, divisi, dan task.</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                <div class="bg-gray-700/60 rounded-lg px-4 py-2">
+                    <p class="text-xs text-gray-400">Total</p>
+                    <p class="font-bold text-white">{{ $marketingStats['total'] ?? 0 }}</p>
+                </div>
+                <div class="bg-gray-700/60 rounded-lg px-4 py-2">
+                    <p class="text-xs text-gray-400">Proses</p>
+                    <p class="font-bold text-yellow-400">{{ $marketingStats['active'] ?? 0 }}</p>
+                </div>
+                <div class="bg-gray-700/60 rounded-lg px-4 py-2">
+                    <p class="text-xs text-gray-400">Deal</p>
+                    <p class="font-bold text-green-400">{{ $marketingStats['deal'] ?? 0 }}</p>
+                </div>
+                <div class="bg-gray-700/60 rounded-lg px-4 py-2">
+                    <p class="text-xs text-gray-400">Perlu Akun</p>
+                    <p class="font-bold text-amber-400">{{ $marketingStats['needs_account'] ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                        <th class="pb-3 font-medium">Calon Customer</th>
+                        <th class="pb-3 font-medium">Bidang</th>
+                        <th class="pb-3 font-medium">Penawaran</th>
+                        <th class="pb-3 font-medium">Progress</th>
+                        <th class="pb-3 font-medium">Project / Task</th>
+                        <th class="pb-3 font-medium text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    @forelse($marketingOffers ?? [] as $offer)
+                        @php
+                            $statusClasses = [
+                                'penawaran' => 'bg-blue-900/50 text-blue-300',
+                                'follow_up' => 'bg-yellow-900/50 text-yellow-300',
+                                'meeting' => 'bg-purple-900/50 text-purple-300',
+                                'menunggu_keputusan' => 'bg-gray-700 text-gray-300',
+                                'negosiasi' => 'bg-orange-900/50 text-orange-300',
+                                'deal' => 'bg-green-900/50 text-green-300',
+                                'pending' => 'bg-yellow-900/50 text-yellow-300',
+                                'rejected' => 'bg-red-900/50 text-red-300',
+                                'no_response' => 'bg-red-900/50 text-red-300',
+                            ];
+                            $needsAccount = $offer->status === 'deal' && !$offer->project_id;
+                            $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
+                                . "Nama Perusahaan: {$offer->company_name}\n"
+                                . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"
+                                . "Jabatan: " . ($offer->contact_position ?: '-') . "\n"
+                                . "Email: " . ($offer->contact_email ?: '-') . "\n"
+                                . "Nomor HP: " . ($offer->contact_phone ?: '-') . "\n"
+                                . "Alamat: {$offer->company_address}\n\n"
+                                . "DATA PROJECT\n"
+                                . "Nama Project: " . ($offer->offer_description ?: $offer->company_name) . "\n"
+                                . "Bidang: " . ucfirst($offer->category) . "\n"
+                                . "Nilai Penawaran: " . ($offer->estimated_value ? 'Rp ' . number_format((float) $offer->estimated_value, 0, ',', '.') : '-') . "\n"
+                                . "Tanggal Deal/Penawaran: " . ($offer->offer_date ? $offer->offer_date->format('d/m/Y') : '-') . "\n"
+                                . "Marketing: " . ($offer->employee?->name ?: '-') . "\n"
+                                . "Catatan: " . ($offer->notes ?: '-');
+                        @endphp
+                        <tr class="hover:bg-gray-700/50 transition">
+                            <td class="py-3 pr-4">
+                                <p class="font-medium text-white">{{ $offer->company_name }}</p>
+                                <p class="text-xs text-gray-400">{{ $offer->contact_person ?: '-' }}{{ $offer->contact_position ? ' - ' . $offer->contact_position : '' }}</p>
+                                <p class="text-xs text-gray-500">{{ $offer->employee?->name ?: 'Marketing tidak tersedia' }}</p>
+                            </td>
+                            <td class="py-3 pr-4">
+                                <span class="px-2 py-1 text-xs rounded-full bg-blue-900/50 text-blue-300 border border-blue-500/30">
+                                    {{ ucfirst($offer->category) }}
+                                </span>
+                            </td>
+                            <td class="py-3 pr-4 text-gray-300 max-w-xs">
+                                <p>{{ Str::limit($offer->offer_description ?: '-', 70) }}</p>
+                                @if($offer->estimated_value)
+                                    <p class="text-xs text-gray-500 mt-1">Rp {{ number_format((float) $offer->estimated_value, 0, ',', '.') }}</p>
+                                @endif
+                            </td>
+                            <td class="py-3 pr-4">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $statusClasses[$offer->status] ?? 'bg-gray-700 text-gray-300' }}">
+                                    {{ $offer->status_label }}
+                                </span>
+                                @if($needsAccount)
+                                    <p class="mt-2 text-xs text-amber-300 bg-amber-900/30 border border-amber-500/30 rounded px-2 py-1 w-fit">
+                                        Perlu akun customer
+                                    </p>
+                                @endif
+                            </td>
+                            <td class="py-3 pr-4">
+                                @if($offer->project)
+                                    <p class="font-medium text-white">{{ $offer->project->name }}</p>
+                                    <p class="text-xs text-gray-400">{{ $offer->project->divisions_count }} divisi, {{ $offer->project->tasks_count }} task</p>
+                                @else
+                                    <span class="text-xs text-gray-500">Belum dibuat project</span>
+                                @endif
+                            </td>
+                            <td class="py-3 text-right">
+                                @if($needsAccount)
+                                    <button type="button"
+                                            class="copy-offer-btn px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded transition"
+                                            data-copy="{{ e($copyText) }}">
+                                        Copy Data
+                                    </button>
+                                @else
+                                    <span class="text-xs text-gray-500">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="py-6 text-center text-gray-500">
+                                Belum ada laporan marketing.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 {{-- ✅ PIE CHART SCRIPT --}}
@@ -300,17 +417,15 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx{{ ucfirst($key) }}, {
             type: 'doughnut',
             data: {
-                labels: ['Ongoing', 'Selesai', 'Pending/Offer'],
+                labels: ['Ongoing', 'Selesai'],
                 datasets: [{
                     data: [
                         {{ $categoryStats[$key]['ongoing'] }},
-                        {{ $categoryStats[$key]['done'] }},
-                        {{ $categoryStats[$key]['offer'] }}
+                        {{ $categoryStats[$key]['done'] }}
                     ],
                     backgroundColor: [
                         '#3b82f6',
-                        '#22c55e',
-                        '#eab308'
+                        '#22c55e'
                     ],
                     borderWidth: 0,
                     hoverOffset: 4
@@ -328,6 +443,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     @endforeach
+
+    document.querySelectorAll('.copy-offer-btn').forEach(function (button) {
+        button.addEventListener('click', async function () {
+            const text = this.dataset.copy || '';
+            const originalText = this.textContent;
+
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (error) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                textarea.remove();
+            }
+
+            this.textContent = 'Tersalin';
+            setTimeout(() => this.textContent = originalText, 1500);
+        });
+    });
 });
 </script>
 @endpush

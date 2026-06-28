@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Project;
 use App\Models\ProjectDivision;
+use App\Models\ProjectPhase;
 use App\Models\ProjectTask;
 use App\Models\MarketingOffer;
 use Illuminate\Support\Facades\Hash;
@@ -81,12 +82,36 @@ class DatabaseSeeder extends Seeder
             'company' => 'Startup Maju Terus',
         ]);
 
+        $customerKlinik = User::firstOrCreate(['email' => 'admin@kliniksehatprima.com'], [
+            'name' => 'Klinik Sehat Prima',
+            'password' => Hash::make('password'),
+            'role_id' => $roleCustomer->id,
+            'company' => 'Klinik Sehat Prima',
+            'phone' => '081277771001',
+        ]);
+
+        $customerGudang = User::firstOrCreate(['email' => 'it@gudangnusantara.co.id'], [
+            'name' => 'PT Gudang Nusantara',
+            'password' => Hash::make('password'),
+            'role_id' => $roleCustomer->id,
+            'company' => 'PT Gudang Nusantara',
+            'phone' => '081288882002',
+        ]);
+
+        $customerApartemen = User::firstOrCreate(['email' => 'ops@apartemensentosa.com'], [
+            'name' => 'Apartemen Sentosa',
+            'password' => Hash::make('password'),
+            'role_id' => $roleCustomer->id,
+            'company' => 'Apartemen Sentosa',
+            'phone' => '081299993003',
+        ]);
+
         // ================= PROJECTS =================
         
         // 1. Penawaran Marketing
         $projOffer1 = Project::firstOrCreate(['name' => 'Website E-Commerce'], [
             'category' => 'web',
-            'status' => 'offer',
+            'status' => 'ongoing',
             'client_name' => 'PT. Digital Kreatif',
             'customer_id' => $customer1->id,
             'address' => 'Jl. Inovasi No.1, Jakarta',
@@ -95,7 +120,7 @@ class DatabaseSeeder extends Seeder
 
         $projOffer2 = Project::firstOrCreate(['name' => 'Aplikasi Mobile Banking'], [
             'category' => 'web',
-            'status' => 'offer',
+            'status' => 'ongoing',
             'client_name' => 'Startup Maju Terus',
             'customer_id' => $customer2->id,
             'address' => 'Jl. Teknologi No. 22, Bandung',
@@ -105,7 +130,7 @@ class DatabaseSeeder extends Seeder
         // 2. Progres Penawaran
         Project::firstOrCreate(['name' => 'Sistem Informasi Akademik'], [
             'category' => 'web',
-            'status' => 'progress_offer',
+            'status' => 'ongoing',
             'client_name' => 'PT. Abadi Sentosa',
             'customer_id' => null,
             'status_text' => 'Follow Up',
@@ -114,7 +139,7 @@ class DatabaseSeeder extends Seeder
         // 3. Penawaran Ditolak
         Project::firstOrCreate(['name' => 'Website Portal Berita'], [
             'category' => 'web',
-            'status' => 'rejected',
+            'status' => 'done',
             'client_name' => 'CV. Terang Benderang',
             'customer_id' => null,
             'rejection_reason' => 'Anggaran tidak sesuai',
@@ -356,24 +381,285 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // ================= PROJECT PHASES (Untuk Timeline & SLA) =================
-        
-        // Tambahkan phases untuk projectWeb1 jika belum ada
-        if ($projectWeb1->phases()->count() === 0) {
-            $phases = [
-                ['phase_name' => 'Analisis Kebutuhan', 'phase_order' => 1, 'status' => 'completed', 'progress' => 100, 'sla_days' => 7, 'sla_status' => 'completed'],
-                ['phase_name' => 'Desain UI/UX', 'phase_order' => 2, 'status' => 'completed', 'progress' => 100, 'sla_days' => 10, 'sla_status' => 'completed'],
-                ['phase_name' => 'Development', 'phase_order' => 3, 'status' => 'ongoing', 'progress' => 40, 'sla_days' => 21, 'sla_status' => 'on_track'],
-                ['phase_name' => 'Testing', 'phase_order' => 4, 'status' => 'pending', 'progress' => 0, 'sla_days' => 7, 'sla_status' => 'on_track'],
-                ['phase_name' => 'Deployment', 'phase_order' => 5, 'status' => 'pending', 'progress' => 0, 'sla_days' => 3, 'sla_status' => 'on_track'],
-            ];
+        // Penawaran Deal yang sudah dibuatkan customer, project, divisi, dan task
+        $projectKlinik = Project::updateOrCreate(
+            ['name' => 'Sistem Booking Klinik Sehat Prima'],
+            [
+                'category' => 'web',
+                'status' => 'ongoing',
+                'client_name' => 'Klinik Sehat Prima',
+                'customer_id' => $customerKlinik->id,
+                'address' => 'Jl. Melati Raya No. 17, Bogor',
+                'progress' => 45,
+                'start_date' => Carbon::parse('2026-06-03'),
+                'deadline' => Carbon::parse('2026-07-20'),
+                'sla' => 95,
+            ]
+        );
 
-            foreach ($phases as $phaseData) {
-                $projectWeb1->phases()->create([
-                    ...$phaseData,
-                    'start_date' => Carbon::parse('2024-06-01')->addDays(($phaseData['phase_order'] - 1) * 5),
-                    'target_date' => Carbon::parse('2024-06-01')->addDays(($phaseData['phase_order'] - 1) * 5 + $phaseData['sla_days']),
+        $klinikUiux = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectKlinik->id, 'name' => 'UI/UX'],
+            ['progress' => 80]
+        );
+        $klinikFrontend = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectKlinik->id, 'name' => 'Frontend'],
+            ['progress' => 45]
+        );
+        $klinikBackend = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectKlinik->id, 'name' => 'Backend'],
+            ['progress' => 30]
+        );
+
+        ProjectTask::firstOrCreate(
+            ['division_id' => $klinikUiux->id, 'title' => 'Membuat flow booking dan wireframe pasien'],
+            [
+                'project_id' => $projectKlinik->id,
+                'assigned_to' => $pegawai1->id,
+                'status' => 'done',
+                'progress' => 100,
+                'deadline' => Carbon::parse('2026-06-12'),
+                'completed_at' => Carbon::parse('2026-06-11'),
+                'completion_notes' => 'Flow pasien, dokter, dan admin sudah disetujui PIC klinik.',
+            ]
+        );
+        ProjectTask::firstOrCreate(
+            ['division_id' => $klinikFrontend->id, 'title' => 'Implementasi dashboard antrean dokter'],
+            [
+                'project_id' => $projectKlinik->id,
+                'assigned_to' => $pegawai1->id,
+                'status' => 'ongoing',
+                'progress' => 45,
+                'deadline' => Carbon::parse('2026-07-02'),
+            ]
+        );
+        ProjectTask::firstOrCreate(
+            ['division_id' => $klinikBackend->id, 'title' => 'API jadwal dokter dan booking pasien'],
+            [
+                'project_id' => $projectKlinik->id,
+                'assigned_to' => $pegawai2->id,
+                'status' => 'ongoing',
+                'progress' => 35,
+                'deadline' => Carbon::parse('2026-07-08'),
+            ]
+        );
+
+        MarketingOffer::updateOrCreate(
+            ['company_name' => 'Klinik Sehat Prima'],
+            [
+                'company_address' => 'Jl. Melati Raya No. 17, Bogor',
+                'contact_person' => 'dr. Maya Lestari',
+                'contact_position' => 'Direktur Klinik',
+                'contact_phone' => '081277771001',
+                'contact_email' => 'admin@kliniksehatprima.com',
+                'category' => 'web',
+                'offer_description' => 'Sistem booking dokter, antrean pasien, dan dashboard admin klinik',
+                'estimated_value' => 120000000,
+                'offer_date' => Carbon::parse('2026-05-22'),
+                'follow_up_date' => Carbon::parse('2026-05-27'),
+                'meeting_date' => Carbon::parse('2026-05-30 10:00'),
+                'status' => 'deal',
+                'reason' => null,
+                'notes' => 'Customer dan project sudah dibuat. Task awal sudah dibagikan ke UI/UX, frontend, dan backend.',
+                'employee_id' => $marketing1->id,
+                'project_id' => $projectKlinik->id,
+            ]
+        );
+
+        $projectGudang = Project::updateOrCreate(
+            ['name' => 'Jaringan Internet Gudang Nusantara'],
+            [
+                'category' => 'internet',
+                'status' => 'ongoing',
+                'client_name' => 'PT Gudang Nusantara',
+                'customer_id' => $customerGudang->id,
+                'address' => 'Kawasan Pergudangan Taman Tekno Blok C7, Tangerang Selatan',
+                'progress' => 60,
+                'start_date' => Carbon::parse('2026-06-01'),
+                'deadline' => Carbon::parse('2026-07-05'),
+                'sla' => 98,
+            ]
+        );
+
+        $gudangNetwork = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectGudang->id, 'name' => 'Network Engineer'],
+            ['progress' => 65]
+        );
+        $gudangNoc = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectGudang->id, 'name' => 'NOC'],
+            ['progress' => 55]
+        );
+
+        ProjectTask::firstOrCreate(
+            ['division_id' => $gudangNetwork->id, 'title' => 'Survey jalur kabel dan titik access point'],
+            [
+                'project_id' => $projectGudang->id,
+                'assigned_to' => $pegawai2->id,
+                'status' => 'done',
+                'progress' => 100,
+                'deadline' => Carbon::parse('2026-06-08'),
+                'completed_at' => Carbon::parse('2026-06-07'),
+            ]
+        );
+        ProjectTask::firstOrCreate(
+            ['division_id' => $gudangNetwork->id, 'title' => 'Instalasi rack dan konfigurasi router utama'],
+            [
+                'project_id' => $projectGudang->id,
+                'assigned_to' => $pegawai2->id,
+                'status' => 'ongoing',
+                'progress' => 60,
+                'deadline' => Carbon::parse('2026-06-25'),
+            ]
+        );
+        ProjectTask::firstOrCreate(
+            ['division_id' => $gudangNoc->id, 'title' => 'Setup monitoring bandwidth dan alert downtime'],
+            [
+                'project_id' => $projectGudang->id,
+                'assigned_to' => $pegawai1->id,
+                'status' => 'pending',
+                'progress' => 0,
+                'deadline' => Carbon::parse('2026-07-02'),
+            ]
+        );
+
+        MarketingOffer::updateOrCreate(
+            ['company_name' => 'PT Gudang Nusantara'],
+            [
+                'company_address' => 'Kawasan Pergudangan Taman Tekno Blok C7, Tangerang Selatan',
+                'contact_person' => 'Bapak Fadli Rahman',
+                'contact_position' => 'IT Supervisor',
+                'contact_phone' => '081288882002',
+                'contact_email' => 'it@gudangnusantara.co.id',
+                'category' => 'internet',
+                'offer_description' => 'Internet dedicated 100 Mbps, rack jaringan, access point gudang, dan monitoring NOC',
+                'estimated_value' => 175000000,
+                'offer_date' => Carbon::parse('2026-05-24'),
+                'follow_up_date' => Carbon::parse('2026-05-28'),
+                'meeting_date' => Carbon::parse('2026-05-31 14:00'),
+                'status' => 'deal',
+                'reason' => null,
+                'notes' => 'Customer dan project sudah dibuat. Divisi network dan NOC sudah memiliki task.',
+                'employee_id' => $marketing2->id,
+                'project_id' => $projectGudang->id,
+            ]
+        );
+
+        $projectApartemen = Project::updateOrCreate(
+            ['name' => 'CCTV Area Publik Apartemen Sentosa'],
+            [
+                'category' => 'cctv',
+                'status' => 'ongoing',
+                'client_name' => 'Apartemen Sentosa',
+                'customer_id' => $customerApartemen->id,
+                'address' => 'Jl. Boulevard Sentosa No. 9, Surabaya',
+                'progress' => 35,
+                'start_date' => Carbon::parse('2026-06-10'),
+                'deadline' => Carbon::parse('2026-07-18'),
+                'sla' => 96,
+            ]
+        );
+
+        $apartemenInstaller = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectApartemen->id, 'name' => 'CCTV Installer'],
+            ['progress' => 40]
+        );
+        $apartemenConfig = ProjectDivision::firstOrCreate(
+            ['project_id' => $projectApartemen->id, 'name' => 'Configuration'],
+            ['progress' => 20]
+        );
+
+        ProjectTask::firstOrCreate(
+            ['division_id' => $apartemenInstaller->id, 'title' => 'Pemasangan kamera area lobby dan parkir'],
+            [
+                'project_id' => $projectApartemen->id,
+                'assigned_to' => $pegawai1->id,
+                'status' => 'ongoing',
+                'progress' => 40,
+                'deadline' => Carbon::parse('2026-06-30'),
+            ]
+        );
+        ProjectTask::firstOrCreate(
+            ['division_id' => $apartemenConfig->id, 'title' => 'Konfigurasi NVR dan akses monitoring security'],
+            [
+                'project_id' => $projectApartemen->id,
+                'assigned_to' => $pegawai2->id,
+                'status' => 'pending',
+                'progress' => 0,
+                'deadline' => Carbon::parse('2026-07-10'),
+            ]
+        );
+
+        MarketingOffer::updateOrCreate(
+            ['company_name' => 'Apartemen Sentosa'],
+            [
+                'company_address' => 'Jl. Boulevard Sentosa No. 9, Surabaya',
+                'contact_person' => 'Ibu Nadya Putri',
+                'contact_position' => 'Building Manager',
+                'contact_phone' => '081299993003',
+                'contact_email' => 'ops@apartemensentosa.com',
+                'category' => 'cctv',
+                'offer_description' => 'Pemasangan CCTV lobby, parkir, lift, dan ruang keamanan dengan akses monitoring',
+                'estimated_value' => 98000000,
+                'offer_date' => Carbon::parse('2026-06-01'),
+                'follow_up_date' => Carbon::parse('2026-06-04'),
+                'meeting_date' => Carbon::parse('2026-06-07 09:30'),
+                'status' => 'deal',
+                'reason' => null,
+                'notes' => 'Customer dan project sudah dibuat. Instalasi tahap pertama sedang berjalan.',
+                'employee_id' => $marketing2->id,
+                'project_id' => $projectApartemen->id,
+            ]
+        );
+
+        // Satu laporan deal sengaja belum dibuatkan akun customer/project.
+        MarketingOffer::updateOrCreate(
+            ['company_name' => 'CV. Logistik Cepat'],
+            [
+                'company_address' => 'Jl. Gatot Subroto No. 12, Tangerang',
+                'contact_person' => 'Ibu Sari',
+                'contact_position' => 'Owner',
+                'contact_phone' => '081298765432',
+                'contact_email' => 'sari@logistikcepat.com',
+                'category' => 'internet',
+                'offer_description' => 'Instalasi jaringan LAN & WAN untuk 3 cabang',
+                'estimated_value' => 250000000,
+                'offer_date' => Carbon::parse('2026-06-15'),
+                'follow_up_date' => Carbon::parse('2026-06-18'),
+                'meeting_date' => Carbon::parse('2026-06-22 13:00'),
+                'status' => 'deal',
+                'reason' => null,
+                'notes' => 'Deal sudah disetujui. Admin perlu membuat akun customer dan project dari tombol copy data.',
+                'employee_id' => $marketing2->id,
+                'project_id' => null,
+            ]
+        );
+
+        // ================= PROJECT PHASES, TASKS & TIMELINE =================
+
+        // Project operasional hanya memakai status ongoing dan done.
+        Project::whereIn('status', ['offer', 'progress_offer', 'rejected'])->delete();
+
+        Project::whereIn('status', ['ongoing', 'done'])
+            ->orderBy('id')
+            ->get()
+            ->each(function (Project $project) use ($pegawai1, $pegawai2) {
+                $this->seedProjectTimelineAndTasks($project, [$pegawai1->id, $pegawai2->id]);
+            });
+
+        foreach (['web', 'internet', 'cctv'] as $category) {
+            if (!Project::where('category', $category)->where('status', 'done')->exists()) {
+                $fallbackProject = Project::create([
+                    'name' => 'Contoh Proyek Selesai ' . strtoupper($category),
+                    'category' => $category,
+                    'status' => 'done',
+                    'client_name' => 'Demo Customer',
+                    'progress' => 100,
+                    'start_date' => now()->subDays(45)->toDateString(),
+                    'end_date' => now()->subDays(5)->toDateString(),
+                    'deadline' => now()->subDays(3)->toDateString(),
+                    'sla' => 100,
                 ]);
+
+                $this->seedProjectTimelineAndTasks($fallbackProject, [$pegawai1->id, $pegawai2->id]);
             }
         }
 
@@ -386,5 +672,100 @@ class DatabaseSeeder extends Seeder
         $this->command->info('  Marketing 1 : marketing1@ninama.com / password');
         $this->command->info('  Marketing 2 : marketing2@ninama.com / password');
         $this->command->info('  Customer 1  : customer@ninama.com / password');
+    }
+
+    private function seedProjectTimelineAndTasks(Project $project, array $employeeIds): void
+    {
+        $project->refresh();
+
+        $timeline = [
+            ['name' => 'Analisis Kebutuhan', 'division' => 'Project Management', 'days' => 6],
+            ['name' => 'Desain UI/UX', 'division' => 'UI/UX', 'days' => 8],
+            ['name' => 'Development', 'division' => $project->category === 'internet' ? 'Network Engineer' : ($project->category === 'cctv' ? 'CCTV Installer' : 'Frontend'), 'days' => 14],
+            ['name' => 'Testing', 'division' => $project->category === 'internet' ? 'NOC' : ($project->category === 'cctv' ? 'Configuration' : 'Testing'), 'days' => 7],
+            ['name' => 'Deployment', 'division' => $project->category === 'internet' ? 'Technical Support' : ($project->category === 'cctv' ? 'Monitoring' : 'DevOps'), 'days' => 4],
+        ];
+
+        $start = $project->start_date ? Carbon::parse($project->start_date) : now()->subDays($project->status === 'done' ? 45 : 20);
+        $cursor = $start->copy();
+        $phaseCount = count($timeline);
+        $completedLimit = $project->status === 'done' ? $phaseCount : 2;
+        $ongoingOrder = $project->status === 'done' ? null : 3;
+
+        ProjectPhase::where('project_id', $project->id)->delete();
+
+        foreach ($timeline as $index => $item) {
+            $order = $index + 1;
+            $phaseStart = $cursor->copy();
+            $phaseTarget = $cursor->copy()->addDays($item['days']);
+            $cursor = $phaseTarget->copy()->addDay();
+
+            $status = 'pending';
+            $progress = 0;
+            $completedDate = null;
+            $slaStatus = 'on_track';
+
+            if ($order <= $completedLimit) {
+                $status = 'completed';
+                $progress = 100;
+                $completedDate = $phaseTarget->copy()->subDay();
+                $slaStatus = 'completed';
+            } elseif ($order === $ongoingOrder) {
+                $status = 'ongoing';
+                $progress = 55;
+            }
+
+            ProjectPhase::create([
+                'project_id' => $project->id,
+                'phase_name' => $item['name'],
+                'phase_order' => $order,
+                'status' => $status,
+                'progress' => $progress,
+                'start_date' => $phaseStart->toDateString(),
+                'target_date' => $phaseTarget->toDateString(),
+                'completed_date' => $completedDate?->toDateString(),
+                'sla_days' => $item['days'],
+                'actual_days' => $completedDate ? $phaseStart->diffInDays($completedDate) : null,
+                'sla_status' => $slaStatus,
+                'notes' => "Seeder timeline {$item['name']} untuk {$project->name}",
+            ]);
+
+            $division = ProjectDivision::firstOrCreate(
+                ['project_id' => $project->id, 'name' => $item['division']],
+                ['progress' => $progress]
+            );
+
+            $taskStatus = match ($status) {
+                'completed' => 'done',
+                'ongoing' => 'ongoing',
+                default => 'pending',
+            };
+
+            ProjectTask::updateOrCreate(
+                ['project_id' => $project->id, 'title' => $item['name']],
+                [
+                    'division_id' => $division->id,
+                    'assigned_to' => $employeeIds[$index % count($employeeIds)] ?? null,
+                    'description' => "Task {$item['name']} untuk milestone proyek {$project->name}.",
+                    'deadline' => $phaseTarget->toDateString(),
+                    'status' => $taskStatus,
+                    'progress' => $progress,
+                    'planned_start_date' => $phaseStart->toDateString(),
+                    'planned_end_date' => $phaseTarget->toDateString(),
+                    'actual_start_date' => $status === 'pending' ? null : $phaseStart->toDateString(),
+                    'actual_end_date' => $status === 'completed' ? $completedDate->toDateString() : null,
+                    'completed_at' => $status === 'completed' ? $completedDate->copy()->setTime(16, 30) : null,
+                    'completion_notes' => $status === 'completed' ? "Fase {$item['name']} selesai sesuai rencana." : null,
+                    'sla_target' => 100,
+                    'is_notified' => false,
+                ]
+            );
+        }
+
+        $project->update([
+            'progress' => $project->status === 'done' ? 100 : 55,
+            'end_date' => $project->status === 'done' ? ($project->end_date ?? $cursor->copy()->subDay()->toDateString()) : null,
+            'deadline' => $project->deadline ?? $cursor->copy()->subDay()->toDateString(),
+        ]);
     }
 }

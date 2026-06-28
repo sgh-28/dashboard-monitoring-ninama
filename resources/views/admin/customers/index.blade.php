@@ -100,7 +100,7 @@
                     @php
                         $ongoing = $customer->customerProjects()->where('status', 'ongoing')->count();
                         $done = $customer->customerProjects()->where('status', 'done')->count();
-                        $offer = $customer->customerProjects()->whereIn('status', ['offer', 'progress_offer'])->count();
+                        $offer = 0;
                         $total = $customer->customer_projects_count;
                         $categories = $customer->categories ?? [];
                     @endphp

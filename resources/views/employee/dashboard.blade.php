@@ -33,16 +33,14 @@
             // Hitung statistik per kategori
             $stats = [];
             foreach($categories as $key => $cat) {
-                $total = \App\Models\Project::where('category', $key)->where('status', '!=', 'rejected')->count();
+                $total = \App\Models\Project::where('category', $key)->whereIn('status', ['ongoing', 'done'])->count();
                 $ongoing = \App\Models\Project::where('category', $key)->where('status', 'ongoing')->count();
                 $done = \App\Models\Project::where('category', $key)->where('status', 'done')->count();
-                $offer = \App\Models\Project::where('category', $key)->whereIn('status', ['offer', 'progress_offer', 'pending'])->count();
                 
                 $stats[$key] = [
                     'total' => $total,
                     'ongoing' => $ongoing,
                     'done' => $done,
-                    'offer' => $offer,
                 ];
             }
         @endphp
@@ -62,7 +60,7 @@
             </div>
 
             {{-- LEGEND --}}
-            <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="grid grid-cols-2 gap-2 text-xs">
                 <div class="text-center">
                     <div class="w-3 h-3 rounded-full bg-blue-500 inline-block mb-1"></div>
                     <p class="text-gray-400">Ongoing</p>
@@ -72,11 +70,6 @@
                     <div class="w-3 h-3 rounded-full bg-green-500 inline-block mb-1"></div>
                     <p class="text-gray-400">Selesai</p>
                     <p class="font-bold text-green-400">{{ $stats[$key]['done'] }}</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-3 h-3 rounded-full bg-yellow-500 inline-block mb-1"></div>
-                    <p class="text-gray-400">Pending/Offer</p>
-                    <p class="font-bold text-yellow-400">{{ $stats[$key]['offer'] }}</p>
                 </div>
             </div>
 
@@ -90,10 +83,10 @@
         @endforeach
     </div>
 
-    {{-- PROYEK TERBARU (NON-REJECTED) --}}
+    {{-- PROYEK TERBARU --}}
     <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold text-white">Proyek Terbaru (Non-Rejected)</h3>
+            <h3 class="text-lg font-semibold text-white">Proyek Terbaru</h3>
             <a href="{{ route('admin.projects.index') }}" class="text-sm text-blue-400 hover:underline">
                 Lihat Semua →
             </a>
@@ -112,7 +105,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-700">
                     @php
-                        $recentProjects = \App\Models\Project::where('status', '!=', 'rejected')
+                        $recentProjects = \App\Models\Project::whereIn('status', ['ongoing', 'done'])
                             ->with('customer')
                             ->orderByDesc('created_at')
                             ->limit(5)
@@ -135,7 +128,6 @@
                             <span class="px-2 py-1 text-xs rounded-full
                                 @if($project->status === 'done') bg-green-900/50 text-green-300
                                 @elseif($project->status === 'ongoing') bg-blue-900/50 text-blue-300
-                                @elseif(in_array($project->status, ['offer', 'progress_offer', 'pending'])) bg-yellow-900/50 text-yellow-300
                                 @else bg-gray-700 text-gray-300 @endif">
                                 {{ ucfirst(str_replace('_', ' ', $project->status)) }}
                             </span>
@@ -173,17 +165,15 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(ctx{{ ucfirst($key) }}, {
         type: 'doughnut',
         data: {
-            labels: ['Ongoing', 'Selesai', 'Pending/Offer'],
+            labels: ['Ongoing', 'Selesai'],
             datasets: [{
                 data: [
                     {{ $stats[$key]['ongoing'] }},
-                    {{ $stats[$key]['done'] }},
-                    {{ $stats[$key]['offer'] }}
+                    {{ $stats[$key]['done'] }}
                 ],
                 backgroundColor: [
                     '#3b82f6', // blue-500
-                    '#22c55e', // green-500
-                    '#eab308'  // yellow-500
+                    '#22c55e' // green-500
                 ],
                 borderWidth: 0
             }]

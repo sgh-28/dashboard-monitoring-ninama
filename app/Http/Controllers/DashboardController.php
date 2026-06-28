@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\MarketingOffer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +15,8 @@ class DashboardController extends Controller
     public function index()
     {
         $categoryStats = $this->getStats();
-        return view('dashboard', compact('categoryStats'));
+        $googleTokenExists = file_exists(storage_path('app/google-token.json'));
+        return view('dashboard', compact('categoryStats', 'googleTokenExists'));
     }
 
     /**
@@ -25,7 +27,7 @@ class DashboardController extends Controller
         $categoryStats = $this->getStats();
         
         // ✅ FILTER & PENCARIAN
-        $query = Project::whereNotIn('status', ['rejected'])
+        $query = Project::whereIn('status', ['ongoing', 'done'])
             ->orderByDesc('created_at');
         
         // Filter pencarian
@@ -48,9 +50,24 @@ class DashboardController extends Controller
         }
         
         $recentProjects = $query->limit(10)->get();
+        $marketingOffers = MarketingOffer::with([
+                'employee',
+                'project' => fn ($projectQuery) => $projectQuery->withCount(['divisions', 'tasks']),
+            ])
+            ->orderByDesc('offer_date')
+            ->orderByDesc('created_at')
+            ->limit(8)
+            ->get();
+
+        $marketingStats = [
+            'total' => MarketingOffer::count(),
+            'deal' => MarketingOffer::where('status', 'deal')->count(),
+            'active' => MarketingOffer::whereIn('status', ['penawaran', 'follow_up', 'meeting', 'menunggu_keputusan', 'negosiasi', 'pending'])->count(),
+            'needs_account' => MarketingOffer::where('status', 'deal')->whereNull('project_id')->count(),
+        ];
         
         // Return view khusus direktur
-        return view('direktur.dashboard', compact('categoryStats', 'recentProjects'));
+        return view('direktur.dashboard', compact('categoryStats', 'recentProjects', 'marketingOffers', 'marketingStats'));
     }
 
     /**
@@ -60,22 +77,19 @@ class DashboardController extends Controller
     {
         return [
             'web' => [
-                'total' => Project::where('category', 'web')->count(),
+                'total' => Project::where('category', 'web')->whereIn('status', ['ongoing', 'done'])->count(),
                 'ongoing' => Project::where('category', 'web')->where('status', 'ongoing')->count(),
                 'done' => Project::where('category', 'web')->where('status', 'done')->count(),
-                'offer' => Project::where('category', 'web')->whereIn('status', ['offer', 'progress_offer'])->count(),
             ],
             'internet' => [
-                'total' => Project::where('category', 'internet')->count(),
+                'total' => Project::where('category', 'internet')->whereIn('status', ['ongoing', 'done'])->count(),
                 'ongoing' => Project::where('category', 'internet')->where('status', 'ongoing')->count(),
                 'done' => Project::where('category', 'internet')->where('status', 'done')->count(),
-                'offer' => Project::where('category', 'internet')->whereIn('status', ['offer', 'progress_offer'])->count(),
             ],
             'cctv' => [
-                'total' => Project::where('category', 'cctv')->count(),
+                'total' => Project::where('category', 'cctv')->whereIn('status', ['ongoing', 'done'])->count(),
                 'ongoing' => Project::where('category', 'cctv')->where('status', 'ongoing')->count(),
                 'done' => Project::where('category', 'cctv')->where('status', 'done')->count(),
-                'offer' => Project::where('category', 'cctv')->whereIn('status', ['offer', 'progress_offer'])->count(),
             ],
         ];
     }

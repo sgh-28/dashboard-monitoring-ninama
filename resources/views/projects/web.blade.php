@@ -9,10 +9,10 @@
         <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Dashboard Web & Aplikasi</h2>
 
         <!-- 5 Statistik Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <!-- Penawaran Marketing (Clickable → Modal) -->
             <div onclick="openModal('offers')" 
-                 class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-blue-500 transition group">
+                 class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-blue-500 transition group">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Penawaran Marketing</p>
                 <p class="text-2xl font-bold text-blue-600 group-hover:text-blue-500">{{ $stats['offer'] ?? 0 }}</p>
                 <div class="mt-2 flex justify-end opacity-0 group-hover:opacity-100 transition">
@@ -25,7 +25,7 @@
 
             <!-- Progres Penawaran (Clickable → Modal) -->
             <div onclick="openModal('progress_offers')" 
-                 class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-yellow-500 transition group">
+                 class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-yellow-500 transition group">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Progres Penawaran</p>
                 <p class="text-2xl font-bold text-yellow-600 group-hover:text-yellow-500">{{ $stats['progress_offer'] ?? 0 }}</p>
                 <div class="mt-2 flex justify-end opacity-0 group-hover:opacity-100 transition">
@@ -37,7 +37,7 @@
 
             <!-- Penawaran Ditolak (Clickable → Modal) -->
             <div onclick="openModal('rejected')" 
-                 class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-red-500 transition group">
+                 class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-red-500 transition group">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Penawaran Ditolak</p>
                 <p class="text-2xl font-bold text-red-600 group-hover:text-red-500">{{ $stats['rejected'] ?? 0 }}</p>
                 <div class="mt-2 flex justify-end opacity-0 group-hover:opacity-100 transition">

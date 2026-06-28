@@ -23,7 +23,7 @@ class AdminProjectController extends Controller
 
     public function index(Request $request)
     {
-        $query = Project::with(['customer', 'divisions'])->whereNotIn('status', ['rejected']);
+        $query = Project::with(['customer', 'divisions'])->whereIn('status', ['ongoing', 'done']);
         
         if ($request->filled('customer')) {
             $query->where('customer_id', $request->customer);
@@ -32,10 +32,9 @@ class AdminProjectController extends Controller
         $projects = $query->orderByDesc('created_at')->paginate(10);
         
         $stats = [
-            'total' => Project::whereNotIn('status', ['rejected'])->count(),
+            'total' => Project::whereIn('status', ['ongoing', 'done'])->count(),
             'ongoing' => Project::where('status', 'ongoing')->count(),
             'completed' => Project::where('status', 'done')->count(),
-            'offers' => Project::whereIn('status', ['offer', 'progress_offer'])->count(),
         ];
         
         return view('admin.projects.index', compact('projects', 'stats'));
@@ -50,7 +49,7 @@ class AdminProjectController extends Controller
             $offerData[$cat] = [
                 'accepted' => Project::where('category', $cat)->whereIn('status', ['ongoing', 'done'])->count(),
                 'rejected' => Project::where('category', $cat)->where('status', 'rejected')->count(),
-                'pending'  => Project::where('category', $cat)->whereIn('status', ['offer', 'progress_offer'])->count(),
+                'pending'  => 0,
             ];
         }
         
@@ -65,7 +64,7 @@ class AdminProjectController extends Controller
     public function create()
     {
         $categories = ['web', 'internet', 'cctv'];
-        $statuses = ['offer', 'progress_offer', 'rejected', 'ongoing', 'done'];
+        $statuses = ['ongoing', 'done'];
         $customers = User::whereHas('role', fn($q) => $q->where('name', 'customer'))->get();
         
         return view('admin.projects.create', compact('categories', 'statuses', 'customers'));
@@ -76,7 +75,7 @@ class AdminProjectController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:web,internet,cctv',
-            'status' => 'required|in:offer,progress_offer,rejected,ongoing,done',
+            'status' => 'required|in:ongoing,done',
             'deadline' => 'nullable|date|after_or_equal:start_date',
             'start_date' => 'nullable|date',
             'sla' => 'nullable|integer|min:0|max:100',
@@ -124,7 +123,7 @@ class AdminProjectController extends Controller
             'start_date' => $request->start_date,
             'deadline' => $request->deadline,
             'sla' => $request->sla ?? 100,
-            'rejection_reason' => $request->status === 'rejected' ? $request->rejection_reason : null,
+            'rejection_reason' => null,
             'progress' => $request->status === 'done' ? 100 : 0,
         ]);
 
@@ -154,7 +153,7 @@ class AdminProjectController extends Controller
     public function edit(Project $project)
     {
         $categories = ['web', 'internet', 'cctv'];
-        $statuses = ['offer', 'progress_offer', 'rejected', 'ongoing', 'done'];
+        $statuses = ['ongoing', 'done'];
         $projectDivisions = $project->divisions->pluck('name')->toArray();
         $customers = User::whereHas('role', fn($q) => $q->where('name', 'customer'))->get();
         
@@ -166,7 +165,7 @@ class AdminProjectController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:web,internet,cctv',
-            'status' => 'required|in:offer,progress_offer,rejected,ongoing,done',
+            'status' => 'required|in:ongoing,done',
             'deadline' => 'nullable|date|after_or_equal:start_date',
             'start_date' => 'nullable|date',
             'sla' => 'nullable|integer|min:0|max:100',
@@ -187,7 +186,7 @@ class AdminProjectController extends Controller
             'start_date' => $request->start_date,
             'deadline' => $request->deadline,
             'sla' => $request->sla ?? 100,
-            'rejection_reason' => $request->status === 'rejected' ? $request->rejection_reason : $project->rejection_reason,
+            'rejection_reason' => null,
             'progress' => $request->progress ?? ($request->status === 'done' ? 100 : $project->progress),
         ]);
 

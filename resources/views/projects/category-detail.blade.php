@@ -32,7 +32,7 @@
     </div>
     
     {{-- Statistik --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-gray-800 p-4 rounded border border-gray-700">
             <p class="text-gray-400 text-xs">Total</p>
             <p class="text-xl font-bold text-white">{{ $stats['total'] ?? 0 }}</p>
@@ -44,10 +44,6 @@
         <div class="bg-gray-800 p-4 rounded border border-gray-700">
             <p class="text-gray-400 text-xs">Selesai</p>
             <p class="text-xl font-bold text-green-500">{{ $stats['done'] ?? 0 }}</p>
-        </div>
-        <div class="bg-gray-800 p-4 rounded border border-gray-700">
-            <p class="text-gray-400 text-xs">Offer</p>
-            <p class="text-xl font-bold text-yellow-500">{{ $stats['offer'] ?? 0 }}</p>
         </div>
     </div>
 

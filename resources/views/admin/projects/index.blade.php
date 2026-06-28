@@ -29,7 +29,7 @@
     </div>
 
     {{-- STATS CARDS --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <p class="text-gray-400 text-sm">Total Proyek</p>
             <p class="text-2xl font-bold text-white">{{ $projects->total() }}</p>
@@ -41,10 +41,6 @@
         <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <p class="text-gray-400 text-sm">Completed</p>
             <p class="text-2xl font-bold text-green-500">{{ $projects->where('status', 'done')->count() }}</p>
-        </div>
-        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
-            <p class="text-gray-400 text-sm">Offer/Pending</p>
-            <p class="text-2xl font-bold text-purple-500">{{ $projects->whereIn('status', ['offer', 'progress_offer', 'pending'])->count() }}</p>
         </div>
     </div>
 

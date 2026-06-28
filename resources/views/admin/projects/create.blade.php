@@ -9,6 +9,8 @@
         <p class="text-gray-400">Isi formulir di bawah untuk membuat proyek baru</p>
     </div>
 
+    <div id="paste-status" class="hidden mb-4 rounded-lg border px-4 py-3 text-sm"></div>
+
     <form action="{{ route('admin.projects.store') }}" method="POST" class="bg-gray-800 rounded-lg p-6 border border-gray-700 space-y-6">
         @csrf
 
@@ -44,6 +46,12 @@
                                 <p class="text-xs text-gray-400 mt-1">Customer akan mendapat akun untuk login dan melihat progress proyek</p>
                             </div>
                         </div>
+
+                        <button type="button"
+                                id="paste-marketing-data"
+                                class="mb-4 inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition">
+                            Paste Data Marketing
+                        </button>
 
                         <div class="space-y-3">
                             <div>
@@ -125,12 +133,9 @@
 
                         <div>
                             <label class="block text-sm text-gray-400 mb-1">Status Proyek</label>
-                            <select name="status" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
-                                <option value="offer" {{ old('status', 'offer') == 'offer' ? 'selected' : '' }}>Penawaran (Offer)</option>
-                                <option value="progress_offer" {{ old('status') == 'progress_offer' ? 'selected' : '' }}>Progress Offer</option>
-                                <option value="ongoing" {{ old('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+                            <select name="status" id="project-status" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                                <option value="ongoing" {{ old('status', 'ongoing') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
                                 <option value="done" {{ old('status') == 'done' ? 'selected' : '' }}>Selesai (Done)</option>
-                                <option value="rejected" {{ old('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
                             </select>
                         </div>
 
@@ -196,8 +201,83 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category-select');
     const divisionsContainer = document.getElementById('divisions-container');
     const existingCustomerSelect = document.getElementById('existing-customer');
+    const pasteButton = document.getElementById('paste-marketing-data');
+    const pasteStatus = document.getElementById('paste-status');
     
     if (!categorySelect || !divisionsContainer) return;
+
+    function setField(name, value) {
+        const field = document.querySelector(`[name="${name}"]`);
+        if (!field || value === undefined || value === null) return;
+
+        field.value = value;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function showPasteStatus(message, type = 'success') {
+        if (!pasteStatus) return;
+
+        pasteStatus.textContent = message;
+        pasteStatus.className = type === 'success'
+            ? 'mb-4 rounded-lg border border-emerald-500/30 bg-emerald-900/30 px-4 py-3 text-sm text-emerald-200'
+            : 'mb-4 rounded-lg border border-red-500/30 bg-red-900/30 px-4 py-3 text-sm text-red-200';
+    }
+
+    function parseMarketingData(text) {
+        const data = {};
+
+        text.split(/\r?\n/).forEach(line => {
+            const separatorIndex = line.indexOf(':');
+            if (separatorIndex === -1) return;
+
+            const key = line.slice(0, separatorIndex).trim().toLowerCase();
+            const value = line.slice(separatorIndex + 1).trim();
+            if (!value || value === '-') return;
+
+            data[key] = value;
+        });
+
+        return data;
+    }
+
+    function normalizeCategory(value) {
+        const normalized = (value || '').toLowerCase();
+
+        if (normalized.includes('internet')) return 'internet';
+        if (normalized.includes('cctv')) return 'cctv';
+        if (normalized.includes('web')) return 'web';
+
+        return '';
+    }
+
+    function clearDivisionChecks() {
+        document.querySelectorAll('[name="divisions[]"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    function applyMarketingData(data) {
+        if (existingCustomerSelect) {
+            existingCustomerSelect.value = '';
+            existingCustomerSelect.dispatchEvent(new Event('change'));
+        }
+
+        setField('new_customer_company', data['nama perusahaan'] || '');
+        setField('new_customer_name', data['nama customer/kontak'] || '');
+        setField('new_customer_email', data['email'] || '');
+        setField('new_customer_phone', data['nomor hp'] || '');
+        setField('new_customer_password', '');
+        setField('new_customer_password_confirmation', '');
+
+        setField('name', data['nama project'] || data['nama perusahaan'] || '');
+        setField('category', normalizeCategory(data['bidang']));
+        setField('status', 'ongoing');
+        setField('address', data['alamat'] || '');
+
+        clearDivisionChecks();
+        setTimeout(clearDivisionChecks, 400);
+    }
 
     // Handle category change - load divisions dynamically
     categorySelect.addEventListener('change', function() {
@@ -264,6 +344,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Trigger on load
         existingCustomerSelect.dispatchEvent(new Event('change'));
+    }
+
+    if (pasteButton) {
+        pasteButton.addEventListener('click', async function () {
+            try {
+                const text = await navigator.clipboard.readText();
+                const data = parseMarketingData(text);
+
+                if (!data['nama perusahaan'] && !data['nama project']) {
+                    showPasteStatus('Clipboard belum berisi data marketing yang valid.', 'error');
+                    return;
+                }
+
+                applyMarketingData(data);
+                showPasteStatus('Data marketing berhasil ditempel. Password, deadline, dan pilihan divisi tetap perlu diisi admin.');
+            } catch (error) {
+                showPasteStatus('Browser tidak mengizinkan akses clipboard. Klik Copy Data lagi, lalu coba Paste Data Marketing.', 'error');
+            }
+        });
     }
 
     // Trigger load if category already selected (edit mode)
