@@ -14,7 +14,7 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
         <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
             <p class="text-sm text-gray-400">Total Penawaran</p>
             <p class="text-2xl font-bold text-white">{{ $stats['total'] }}</p>
@@ -38,7 +38,7 @@
     </div>
 
     <form method="GET" action="{{ route('marketing.index') }}" class="bg-gray-800 rounded-lg border border-gray-700 p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Cari</label>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Perusahaan, kontak, alamat..."
