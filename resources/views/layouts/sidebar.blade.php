@@ -18,6 +18,11 @@
     @if(Auth::check())
         @php
             $userRole = Auth::user()?->role?->name ?? '';
+            $projectRouteParam = request()->route('project');
+            $activeProjectCategory = request('category') ?: (is_object($projectRouteParam) ? ($projectRouteParam->category ?? null) : null);
+            $projectSectionActive = request()->routeIs('admin.projects.*')
+                || request()->routeIs('admin.tasks.*')
+                || request()->routeIs('projects.detail');
         @endphp
 
         {{-- ✅ Direktur: Dashboard Khusus Direktur --}}
@@ -79,7 +84,7 @@
         
         {{-- Web & Aplikasi --}}
         <a href="{{ route('projects.category.detail', ['category' => 'web']) }}" 
-           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('projects.category.detail') && request('category') === 'web' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ in_array($activeProjectCategory, ['web'], true) && (request()->routeIs('projects.category.detail') || request()->routeIs('projects.detail')) ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
             </svg>
@@ -88,7 +93,7 @@
         
         {{-- Internet & Jaringan --}}
         <a href="{{ route('projects.category.detail', ['category' => 'internet']) }}" 
-           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('projects.category.detail') && request('category') === 'internet' ? 'bg-green-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ in_array($activeProjectCategory, ['internet'], true) && (request()->routeIs('projects.category.detail') || request()->routeIs('projects.detail')) ? 'bg-green-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
             </svg>
@@ -97,7 +102,7 @@
         
         {{-- CCTV --}}
         <a href="{{ route('projects.category.detail', ['category' => 'cctv']) }}" 
-           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('projects.category.detail') && request('category') === 'cctv' ? 'bg-purple-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ in_array($activeProjectCategory, ['cctv'], true) && (request()->routeIs('projects.category.detail') || request()->routeIs('projects.detail')) ? 'bg-purple-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
@@ -157,7 +162,7 @@
         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-3">ADMIN</h3>
         
         <a href="{{ route('admin.projects.index') }}" 
-           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ request()->routeIs('admin.projects.*') ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+           class="flex items-center gap-3 px-3 py-2 rounded-lg {{ $projectSectionActive ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
