@@ -22,3 +22,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+client_secret_*.json
+
+config_services_snippet.txt
+
+kernel_snippet.txt
+
+storage/framework/sessions/*
