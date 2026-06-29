@@ -46,7 +46,8 @@
 
     {{-- TABLE --}}
     <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <table class="w-full">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[900px]">
             <thead class="bg-gray-700">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs text-gray-300 uppercase">Nama Proyek</th>
@@ -162,6 +163,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 
     {{-- PAGINATION --}}
