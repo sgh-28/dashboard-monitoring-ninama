@@ -18,10 +18,10 @@ class GoogleCalendarService
         $this->tokenPath = storage_path('app/google-token.json');
         
         $this->client = new Client();
-        $this->client->setApplicationName(env('GOOGLE_APP_NAME', 'Ninama Dashboard'));
-        $this->client->setClientId(env('GOOGLE_CLIENT_ID'));
-        $this->client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
-        $this->client->setRedirectUri(env('GOOGLE_REDIRECT_URI', 'http://ninama-dashboard.test/auth/google/callback'));
+        $this->client->setApplicationName(config('services.google.app_name'));
+        $this->client->setClientId(config('services.google.client_id'));
+        $this->client->setClientSecret(config('services.google.client_secret'));
+        $this->client->setRedirectUri(config('services.google.redirect'));
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
         $this->client->setIncludeGrantedScopes(true);
@@ -126,8 +126,8 @@ class GoogleCalendarService
     }
 
     public function getAuthUrl()
-    {
-        return $this->client->createAuthUrl();
+    {    
+         return $this->client->createAuthUrl();
     }
 
     public function saveToken($authCode)
