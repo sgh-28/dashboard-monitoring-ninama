@@ -110,6 +110,41 @@
                             </div>
                         </div>
                         @endif
+
+                        {{-- Tasklist Read-Only untuk Customer --}}
+                        @if($project->divisions && $project->divisions->flatMap->tasks->count() > 0)
+                        <div class="mt-4 pt-4 border-t border-gray-600">
+                            <p class="text-gray-400 text-sm mb-3">TASKLIST PROYEK</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="text-left text-xs text-gray-400 uppercase border-b border-gray-600">
+                                        <tr>
+                                            <th class="pb-2 font-medium">Task</th>
+                                            <th class="pb-2 font-medium">Divisi</th>
+                                            <th class="pb-2 font-medium">Status</th>
+                                            <th class="pb-2 font-medium">Deadline</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-600">
+                                        @foreach($project->divisions->flatMap->tasks->sortBy('deadline') as $task)
+                                        <tr>
+                                            <td class="py-2 pr-3 text-gray-200">{{ $task->title }}</td>
+                                            <td class="py-2 pr-3 text-gray-400">{{ $task->division?->name ?? '-' }}</td>
+                                            <td class="py-2 pr-3">
+                                                <span class="px-2 py-1 text-xs rounded-full {{ $task->status_color }}">
+                                                    {{ $task->status_label }}
+                                                </span>
+                                            </td>
+                                            <td class="py-2 text-gray-400">
+                                                {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : '-' }}
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                     @endforeach
                 </div>

@@ -46,7 +46,11 @@
             </label>
             <input type="file" name="proof_image" accept="image/*" required 
                    class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700">
-            <p class="text-xs text-gray-500 mt-1">Upload foto hasil pekerjaan (JPG/PNG, max 5MB). Wajib diisi.</p>
+            <p class="text-xs text-gray-300 mt-1">
+                Ukuran maksimal foto <span class="font-semibold text-yellow-300">5 MB</span>. Format yang diterima: JPG, JPEG, PNG.
+                Jika lebih besar, kecilkan/kompres foto terlebih dahulu agar berhasil dikirim.
+            </p>
+            <p id="file-size-warning" class="hidden text-xs text-red-400 mt-1"></p>
             @error('proof_image') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
 
@@ -79,7 +83,20 @@
 // Preview gambar sebelum upload
 document.querySelector('input[name="proof_image"]').addEventListener('change', function(e) {
     const file = e.target.files[0];
+    const warning = document.getElementById('file-size-warning');
+    warning.classList.add('hidden');
+    warning.textContent = '';
+
     if (file) {
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            warning.textContent = `Ukuran file ${(file.size / 1024 / 1024).toFixed(2)} MB. Maksimal yang bisa dikirim adalah 5 MB.`;
+            warning.classList.remove('hidden');
+            e.target.value = '';
+            document.getElementById('preview-container').style.display = 'none';
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('preview-image').src = e.target.result;

@@ -53,6 +53,33 @@ class MarketingOffer extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function hasCustomerAccount(): bool
+    {
+        return User::whereHas('role', fn($q) => $q->where('name', 'customer'))
+            ->where(function ($q) {
+                if ($this->contact_email) {
+                    $q->orWhere('email', $this->contact_email);
+                }
+
+                if ($this->contact_phone) {
+                    $q->orWhere('phone', $this->contact_phone);
+                }
+
+                if ($this->company_name) {
+                    $q->orWhere('company', $this->company_name)
+                        ->orWhere('name', $this->company_name);
+                }
+            })
+            ->exists();
+    }
+
+    public function needsCustomerAccount(): bool
+    {
+        return $this->status === 'deal'
+            && !$this->project_id
+            && !$this->hasCustomerAccount();
+    }
+
     /**
      * Scope untuk filter berdasarkan kategori
      */

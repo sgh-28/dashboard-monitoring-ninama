@@ -34,6 +34,96 @@
         </div>
     @endisset
 
+    {{-- TASKLIST READ ONLY UNTUK ADMIN / DIREKTUR --}}
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-white">Tasklist Proyek</h3>
+                <p class="text-sm text-gray-400">Read-only untuk monitoring status, keterlambatan, dan laporan pengerjaan pegawai.</p>
+            </div>
+            <span class="text-xs text-gray-400">
+                {{ $project->tasks->where('status', 'done')->count() }}/{{ $project->tasks->count() }} task selesai
+            </span>
+        </div>
+
+        @if($project->tasks->count() > 0)
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-700/60 text-gray-300 uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Task</th>
+                            <th class="px-4 py-3 text-left">Divisi</th>
+                            <th class="px-4 py-3 text-left">Pegawai</th>
+                            <th class="px-4 py-3 text-left">Status</th>
+                            <th class="px-4 py-3 text-left">Deadline</th>
+                            <th class="px-4 py-3 text-left">Laporan Pengerjaan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        @foreach($project->tasks->sortBy('deadline') as $task)
+                            @php
+                                $deadline = $task->deadline ? \Carbon\Carbon::parse($task->deadline)->startOfDay() : null;
+                                $finishDate = $task->actual_end_date ?? $task->completed_at;
+                                $finishDate = $finishDate ? \Carbon\Carbon::parse($finishDate)->startOfDay() : null;
+                                $isLate = $deadline && (
+                                    ($task->status !== 'done' && now()->startOfDay()->gt($deadline)) ||
+                                    ($task->status === 'done' && $finishDate && $finishDate->gt($deadline))
+                                );
+                                $lateDays = $isLate
+                                    ? (int) $deadline->diffInDays($finishDate ?? now()->startOfDay())
+                                    : 0;
+                            @endphp
+                            <tr class="hover:bg-gray-700/30 {{ $isLate ? 'bg-red-900/10' : '' }}">
+                                <td class="px-4 py-3">
+                                    <p class="font-medium text-white">{{ $task->title }}</p>
+                                    @if($task->description)
+                                        <p class="text-xs text-gray-500 mt-1">{{ Str::limit($task->description, 70) }}</p>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-gray-300">{{ $task->division?->name ?? '-' }}</td>
+                                <td class="px-4 py-3">
+                                    <p class="text-gray-300">{{ $task->assignee?->name ?? '-' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $task->assignee?->jabatan ?? '' }}</p>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 text-xs rounded-full {{ $task->status_color }}">
+                                        {{ $task->status_label }}
+                                    </span>
+                                    @if($isLate)
+                                        <p class="text-xs text-red-400 mt-2">Terlambat {{ $lateDays }} hari</p>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-gray-300">
+                                    {{ $deadline ? $deadline->format('d/m/Y') : '-' }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($task->status === 'done')
+                                        @if($task->completion_notes)
+                                            <p class="text-gray-300">{{ Str::limit($task->completion_notes, 90) }}</p>
+                                        @else
+                                            <p class="text-gray-500">Tidak ada keterangan.</p>
+                                        @endif
+                                        @if($task->proof_image)
+                                            <a href="{{ asset('storage/' . $task->proof_image) }}" target="_blank" class="inline-flex mt-2 text-xs text-blue-400 hover:underline">
+                                                Lihat bukti foto
+                                            </a>
+                                        @else
+                                            <p class="text-xs text-gray-500 mt-2">Bukti foto belum tersedia.</p>
+                                        @endif
+                                    @else
+                                        <span class="text-xs text-gray-500">Belum ada laporan.</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p class="text-gray-400 text-center py-6">Belum ada task untuk proyek ini.</p>
+        @endif
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {{-- KOLOM KIRI: PROGRESS DETAILS --}}
@@ -48,7 +138,7 @@
                     @foreach($project->phases as $phase)
                     <div>
                         <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-300">{{ $phase->phase_name }}</span>
+                            <span class="text-gray-300">{{ $phase->display_name }}</span>
                             <span class="text-gray-400">{{ $phase->progress }}%</span>
                         </div>
                         <div class="w-full bg-gray-700 rounded-full h-2.5">
@@ -118,7 +208,7 @@
                                     <span class="text-xs">{{ $phase->phase_order }}</span>
                                 @endif
                             </div>
-                            <p class="text-xs text-gray-400 font-medium">{{ Str::limit($phase->phase_name, 10) }}</p>
+                            <p class="text-xs text-gray-400 font-medium">{{ Str::limit($phase->display_name, 16) }}</p>
                             <p class="text-[10px] mt-1
                                 @if($phase->status === 'completed') text-green-400
                                 @elseif($phase->status === 'ongoing') text-blue-400
@@ -189,7 +279,7 @@
                                 @elseif($phase->status === 'ongoing') bg-blue-500 animate-pulse
                                 @else bg-gray-500 @endif"></div>
                             <div>
-                                <p class="text-sm font-medium text-white">{{ $phase->phase_name }}</p>
+                                <p class="text-sm font-medium text-white">{{ $phase->display_name }}</p>
                                 <p class="text-xs text-gray-400">
                                     @if($phase->target_date)
                                         Target: {{ $phase->target_date->format('d M') }}

@@ -46,7 +46,11 @@ class AdminMarketingController extends Controller
             'deal' => MarketingOffer::where('status', 'deal')->count(),
             'active' => MarketingOffer::whereIn('status', ['penawaran', 'follow_up', 'meeting', 'menunggu_keputusan', 'negosiasi', 'pending'])->count(),
             'rejected' => MarketingOffer::whereIn('status', ['rejected', 'no_response'])->count(),
-            'needs_account' => MarketingOffer::where('status', 'deal')->whereNull('project_id')->count(),
+            'needs_account' => MarketingOffer::where('status', 'deal')
+                ->whereNull('project_id')
+                ->get()
+                ->filter(fn($offer) => $offer->needsCustomerAccount())
+                ->count(),
         ];
 
         return view('admin.marketing.index', compact('offers', 'stats'));

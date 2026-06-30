@@ -63,7 +63,11 @@ class DashboardController extends Controller
             'total' => MarketingOffer::count(),
             'deal' => MarketingOffer::where('status', 'deal')->count(),
             'active' => MarketingOffer::whereIn('status', ['penawaran', 'follow_up', 'meeting', 'menunggu_keputusan', 'negosiasi', 'pending'])->count(),
-            'needs_account' => MarketingOffer::where('status', 'deal')->whereNull('project_id')->count(),
+            'needs_account' => MarketingOffer::where('status', 'deal')
+                ->whereNull('project_id')
+                ->get()
+                ->filter(fn($offer) => $offer->needsCustomerAccount())
+                ->count(),
         ];
         
         // Return view khusus direktur

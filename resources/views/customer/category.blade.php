@@ -78,6 +78,40 @@
                             </p>
                         </div>
                     </div>
+
+                    @if($project->divisions && $project->divisions->flatMap->tasks->count() > 0)
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <p class="text-gray-500 dark:text-gray-400 text-xs uppercase mb-3">Tasklist Proyek</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="text-left text-xs text-gray-500 dark:text-gray-400 uppercase border-b border-gray-100 dark:border-gray-700">
+                                    <tr>
+                                        <th class="pb-2 font-medium">Task</th>
+                                        <th class="pb-2 font-medium">Divisi</th>
+                                        <th class="pb-2 font-medium">Status</th>
+                                        <th class="pb-2 font-medium">Deadline</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    @foreach($project->divisions->flatMap->tasks->sortBy('deadline') as $task)
+                                    <tr>
+                                        <td class="py-2 pr-3 text-gray-800 dark:text-gray-200">{{ $task->title }}</td>
+                                        <td class="py-2 pr-3 text-gray-500 dark:text-gray-400">{{ $task->division?->name ?? '-' }}</td>
+                                        <td class="py-2 pr-3">
+                                            <span class="px-2 py-1 text-xs rounded-full {{ $task->status_color }}">
+                                                {{ $task->status_label }}
+                                            </span>
+                                        </td>
+                                        <td class="py-2 text-gray-500 dark:text-gray-400">
+                                            {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d/m/Y') : '-' }}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endif
                 </div>
                 @endforeach
             </div>

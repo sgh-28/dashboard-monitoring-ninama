@@ -40,7 +40,12 @@ class MarketingOfferController extends Controller
             'total' => (clone $statsBase)->count(),
             'active' => (clone $statsBase)->whereIn('status', ['penawaran', 'follow_up', 'meeting', 'menunggu_keputusan', 'negosiasi', 'pending'])->count(),
             'deal' => (clone $statsBase)->where('status', 'deal')->count(),
-            'needs_account' => (clone $statsBase)->where('status', 'deal')->whereNull('project_id')->count(),
+            'needs_account' => (clone $statsBase)
+                ->where('status', 'deal')
+                ->whereNull('project_id')
+                ->get()
+                ->filter(fn($offer) => $offer->needsCustomerAccount())
+                ->count(),
             'rejected' => (clone $statsBase)->whereIn('status', ['rejected', 'no_response'])->count(),
         ];
 
@@ -91,10 +96,6 @@ class MarketingOfferController extends Controller
      */
     public function edit(MarketingOffer $offer)
     {
-        // Cek kepemilikan
-        if ($offer->employee_id !== Auth::id()) {
-            abort(403);
-        }
         return view('marketing.edit', compact('offer'));
     }
 
@@ -103,10 +104,6 @@ class MarketingOfferController extends Controller
      */
     public function update(Request $request, MarketingOffer $offer)
     {
-        if ($offer->employee_id !== Auth::id()) {
-            abort(403);
-        }
-
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'company_address' => 'required|string',
@@ -135,11 +132,8 @@ class MarketingOfferController extends Controller
      */
     public function destroy(MarketingOffer $offer)
     {
-        if ($offer->employee_id !== Auth::id()) {
-            abort(403);
-        }
-
         $offer->delete();
         return back()->with('success', 'Data penawaran dihapus.');
     }
+
 }

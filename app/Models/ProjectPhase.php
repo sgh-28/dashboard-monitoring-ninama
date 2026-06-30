@@ -39,6 +39,42 @@ class ProjectPhase extends Model
         return $query->orderBy('phase_order');
     }
 
+    public function getDisplayNameAttribute(): string
+    {
+        $category = $this->project?->category;
+        $templates = self::phaseTemplates();
+
+        return $templates[$category][$this->phase_order - 1]['name']
+            ?? $this->phase_name;
+    }
+
+    public static function phaseTemplates(): array
+    {
+        return [
+            'web' => [
+                ['name' => 'Analisis Kebutuhan', 'division' => 'Project Management', 'days' => 6],
+                ['name' => 'Desain UI/UX', 'division' => 'UI/UX', 'days' => 8],
+                ['name' => 'Pengembangan Aplikasi', 'division' => 'Frontend', 'days' => 14],
+                ['name' => 'Testing Aplikasi', 'division' => 'Testing', 'days' => 7],
+                ['name' => 'Deployment Aplikasi', 'division' => 'DevOps', 'days' => 4],
+            ],
+            'internet' => [
+                ['name' => 'Survey Kebutuhan Jaringan', 'division' => 'Project Management', 'days' => 5],
+                ['name' => 'Perancangan Topologi Jaringan', 'division' => 'Network Engineer', 'days' => 7],
+                ['name' => 'Instalasi Infrastruktur Jaringan', 'division' => 'Fiber Optic Technician', 'days' => 14],
+                ['name' => 'Konfigurasi & Monitoring NOC', 'division' => 'NOC', 'days' => 7],
+                ['name' => 'Serah Terima & Technical Support', 'division' => 'Technical Support', 'days' => 4],
+            ],
+            'cctv' => [
+                ['name' => 'Survey Titik Kamera', 'division' => 'Project Management', 'days' => 5],
+                ['name' => 'Perencanaan Jalur & Perangkat CCTV', 'division' => 'CCTV Installer', 'days' => 6],
+                ['name' => 'Pemasangan Kamera CCTV', 'division' => 'CCTV Installer', 'days' => 12],
+                ['name' => 'Konfigurasi NVR & Monitoring', 'division' => 'Configuration', 'days' => 7],
+                ['name' => 'Testing & Maintenance CCTV', 'division' => 'Maintenance', 'days' => 4],
+            ],
+        ];
+    }
+
     /**
      * Hitung SLA otomatis
      */

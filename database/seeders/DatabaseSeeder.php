@@ -678,13 +678,8 @@ class DatabaseSeeder extends Seeder
     {
         $project->refresh();
 
-        $timeline = [
-            ['name' => 'Analisis Kebutuhan', 'division' => 'Project Management', 'days' => 6],
-            ['name' => 'Desain UI/UX', 'division' => 'UI/UX', 'days' => 8],
-            ['name' => 'Development', 'division' => $project->category === 'internet' ? 'Network Engineer' : ($project->category === 'cctv' ? 'CCTV Installer' : 'Frontend'), 'days' => 14],
-            ['name' => 'Testing', 'division' => $project->category === 'internet' ? 'NOC' : ($project->category === 'cctv' ? 'Configuration' : 'Testing'), 'days' => 7],
-            ['name' => 'Deployment', 'division' => $project->category === 'internet' ? 'Technical Support' : ($project->category === 'cctv' ? 'Monitoring' : 'DevOps'), 'days' => 4],
-        ];
+        $timeline = ProjectPhase::phaseTemplates()[$project->category]
+            ?? ProjectPhase::phaseTemplates()['web'];
 
         $start = $project->start_date ? Carbon::parse($project->start_date) : now()->subDays($project->status === 'done' ? 45 : 20);
         $cursor = $start->copy();

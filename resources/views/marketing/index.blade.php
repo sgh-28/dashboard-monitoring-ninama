@@ -103,21 +103,7 @@
                                 'rejected' => 'bg-red-900/50 text-red-300',
                                 'no_response' => 'bg-red-900/50 text-red-300',
                             ];
-                            $needsAccount = $offer->status === 'deal' && !$offer->project_id;
-                            $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
-                                . "Nama Perusahaan: {$offer->company_name}\n"
-                                . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"
-                                . "Jabatan: " . ($offer->contact_position ?: '-') . "\n"
-                                . "Email: " . ($offer->contact_email ?: '-') . "\n"
-                                . "Nomor HP: " . ($offer->contact_phone ?: '-') . "\n"
-                                . "Alamat: {$offer->company_address}\n\n"
-                                . "DATA PROJECT\n"
-                                . "Nama Project: " . ($offer->offer_description ?: $offer->company_name) . "\n"
-                                . "Bidang: " . ucfirst($offer->category) . "\n"
-                                . "Nilai Penawaran: " . ($offer->estimated_value ? 'Rp ' . number_format((float) $offer->estimated_value, 0, ',', '.') : '-') . "\n"
-                                . "Tanggal Deal/Penawaran: " . ($offer->offer_date ? $offer->offer_date->format('d/m/Y') : '-') . "\n"
-                                . "Marketing: " . ($offer->employee?->name ?: '-') . "\n"
-                                . "Catatan: " . ($offer->notes ?: '-');
+                            $needsAccount = $offer->needsCustomerAccount();
                         @endphp
                         <tr class="hover:bg-gray-700/30 transition">
                             <td class="px-4 py-3">
@@ -166,23 +152,12 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex gap-2 justify-end">
-                                    @if($needsAccount)
-                                        <button type="button"
-                                                class="copy-offer-btn px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded transition"
-                                                data-copy="{{ e($copyText) }}">
-                                            Copy Data
-                                        </button>
-                                    @endif
-                                    @if($offer->employee_id === Auth::id())
-                                        <a href="{{ route('marketing.edit', $offer) }}" class="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-700 text-white rounded transition">Edit</a>
-                                        <form action="{{ route('marketing.destroy', $offer) }}" method="POST" onsubmit="return confirm('Hapus data penawaran ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Hapus</button>
-                                        </form>
-                                    @else
-                                        <span class="px-3 py-1 text-xs text-gray-500">View only</span>
-                                    @endif
+                                    <a href="{{ route('marketing.edit', $offer) }}" class="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-700 text-white rounded transition">Edit</a>
+                                    <form action="{{ route('marketing.destroy', $offer) }}" method="POST" onsubmit="return confirm('Hapus data penawaran ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Hapus</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -203,32 +178,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.copy-offer-btn').forEach(function (button) {
-        button.addEventListener('click', async function () {
-            const text = this.dataset.copy || '';
-            const originalText = this.textContent;
-
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch (error) {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                textarea.remove();
-            }
-
-            this.textContent = 'Tersalin';
-            setTimeout(() => this.textContent = originalText, 1500);
-        });
-    });
-});
-</script>
-@endpush
 @endsection

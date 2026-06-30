@@ -141,8 +141,8 @@
     </div>
     @endif
 
-    <!-- MENU TUGAS SAYA - HANYA PEGAWAI & MARKETING -->
-    @if(Auth::check() && in_array(Auth::user()?->role?->name ?? '', ['pegawai', 'marketing']))
+    <!-- MENU TUGAS SAYA - HANYA PEGAWAI -->
+    @if(Auth::check() && (Auth::user()?->role?->name ?? '') === 'pegawai')
     <div class="mt-6">
         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-3">TUGAS</h3>
         

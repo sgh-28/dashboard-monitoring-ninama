@@ -103,7 +103,7 @@
                                 'rejected' => 'bg-red-900/50 text-red-300',
                                 'no_response' => 'bg-red-900/50 text-red-300',
                             ];
-                            $needsAccount = $offer->status === 'deal' && !$offer->project_id;
+                            $needsAccount = $offer->needsCustomerAccount();
                             $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
                                 . "Nama Perusahaan: {$offer->company_name}\n"
                                 . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"

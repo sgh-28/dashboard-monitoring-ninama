@@ -314,7 +314,6 @@
                         <th class="pb-3 font-medium">Penawaran</th>
                         <th class="pb-3 font-medium">Progress</th>
                         <th class="pb-3 font-medium">Project / Task</th>
-                        <th class="pb-3 font-medium text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-700">
@@ -331,21 +330,7 @@
                                 'rejected' => 'bg-red-900/50 text-red-300',
                                 'no_response' => 'bg-red-900/50 text-red-300',
                             ];
-                            $needsAccount = $offer->status === 'deal' && !$offer->project_id;
-                            $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
-                                . "Nama Perusahaan: {$offer->company_name}\n"
-                                . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"
-                                . "Jabatan: " . ($offer->contact_position ?: '-') . "\n"
-                                . "Email: " . ($offer->contact_email ?: '-') . "\n"
-                                . "Nomor HP: " . ($offer->contact_phone ?: '-') . "\n"
-                                . "Alamat: {$offer->company_address}\n\n"
-                                . "DATA PROJECT\n"
-                                . "Nama Project: " . ($offer->offer_description ?: $offer->company_name) . "\n"
-                                . "Bidang: " . ucfirst($offer->category) . "\n"
-                                . "Nilai Penawaran: " . ($offer->estimated_value ? 'Rp ' . number_format((float) $offer->estimated_value, 0, ',', '.') : '-') . "\n"
-                                . "Tanggal Deal/Penawaran: " . ($offer->offer_date ? $offer->offer_date->format('d/m/Y') : '-') . "\n"
-                                . "Marketing: " . ($offer->employee?->name ?: '-') . "\n"
-                                . "Catatan: " . ($offer->notes ?: '-');
+                            $needsAccount = $offer->needsCustomerAccount();
                         @endphp
                         <tr class="hover:bg-gray-700/50 transition">
                             <td class="py-3 pr-4">
@@ -382,21 +367,10 @@
                                     <span class="text-xs text-gray-500">Belum dibuat project</span>
                                 @endif
                             </td>
-                            <td class="py-3 text-right">
-                                @if($needsAccount)
-                                    <button type="button"
-                                            class="copy-offer-btn px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded transition"
-                                            data-copy="{{ e($copyText) }}">
-                                        Copy Data
-                                    </button>
-                                @else
-                                    <span class="text-xs text-gray-500">-</span>
-                                @endif
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-6 text-center text-gray-500">
+                            <td colspan="5" class="py-6 text-center text-gray-500">
                                 Belum ada laporan marketing.
                             </td>
                         </tr>
@@ -444,28 +418,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     @endforeach
 
-    document.querySelectorAll('.copy-offer-btn').forEach(function (button) {
-        button.addEventListener('click', async function () {
-            const text = this.dataset.copy || '';
-            const originalText = this.textContent;
-
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch (error) {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                textarea.remove();
-            }
-
-            this.textContent = 'Tersalin';
-            setTimeout(() => this.textContent = originalText, 1500);
-        });
-    });
 });
 </script>
 @endpush

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\ProjectMilestone;
+use App\Models\ProjectPhase;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -176,7 +177,10 @@ class MilestoneService
         $months = $this->buildMonthMarkers($start, $end, $totalDays);
         $alerts = [];
 
-        $items = $tasks->map(function (ProjectTask $task, int $index) use ($start, $totalDays, &$alerts) {
+        $phaseTemplates = ProjectPhase::phaseTemplates()[$project->category] ?? [];
+        $genericTaskNames = ['Analisis Kebutuhan', 'Desain UI/UX', 'Development', 'Testing', 'Deployment'];
+
+        $items = $tasks->map(function (ProjectTask $task, int $index) use ($start, $totalDays, &$alerts, $phaseTemplates, $genericTaskNames) {
             $plannedStart = $task->planned_start_date
                 ? Carbon::parse($task->planned_start_date)
                 : ($task->project?->start_date ? Carbon::parse($task->project->start_date) : Carbon::parse($task->created_at));
@@ -197,8 +201,8 @@ class MilestoneService
 
             if ($isDelayed) {
                 $alerts[] = [
-                    'task' => $task->title,
-                    'division' => $task->division?->name ?? 'Tanpa divisi',
+                    'task' => $this->displayTaskTitle($task, $index, $phaseTemplates, $genericTaskNames),
+                    'division' => $this->displayTaskDivision($task, $index, $phaseTemplates),
                     'planned_date' => $plannedEnd->format('d M Y'),
                     'actual_date' => $actualEnd ? $actualEnd->format('d M Y') : null,
                     'delay_days' => $delayDays,
@@ -208,8 +212,8 @@ class MilestoneService
 
             return [
                 'id' => $task->id,
-                'title' => $task->title,
-                'division' => $task->division?->name ?? 'Tanpa divisi',
+                'title' => $this->displayTaskTitle($task, $index, $phaseTemplates, $genericTaskNames),
+                'division' => $this->displayTaskDivision($task, $index, $phaseTemplates),
                 'assignee' => $task->assignee?->name,
                 'status' => $task->status,
                 'status_label' => $task->status_label,
@@ -274,5 +278,23 @@ class MilestoneService
         $colors = ['#f59e0b', '#2563eb', '#059669', '#7c3aed', '#dc2626', '#0891b2', '#db2777'];
 
         return $colors[$index % count($colors)];
+    }
+
+    private function displayTaskTitle(ProjectTask $task, int $index, array $phaseTemplates, array $genericTaskNames): string
+    {
+        if (isset($phaseTemplates[$index]) && in_array($task->title, $genericTaskNames, true)) {
+            return $phaseTemplates[$index]['name'];
+        }
+
+        return $task->title;
+    }
+
+    private function displayTaskDivision(ProjectTask $task, int $index, array $phaseTemplates): string
+    {
+        if (isset($phaseTemplates[$index])) {
+            return $phaseTemplates[$index]['division'];
+        }
+
+        return $task->division?->name ?? 'Tanpa divisi';
     }
 }
