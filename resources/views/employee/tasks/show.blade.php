@@ -122,12 +122,15 @@
         @if($task->status === 'pending')
             <form action="{{ route('employee.tasks.submit', $task) }}" method="POST">
                 @csrf
-                @method('PUT')
                 <input type="hidden" name="status" value="ongoing">
                 <button type="submit" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition font-medium">
                     ▶️ Mulai Kerjakan
                 </button>
             </form>
+        @elseif($task->status === 'ongoing')
+            <span class="px-6 py-2 bg-blue-600/20 text-blue-300 border border-blue-500/30 rounded-lg font-medium">
+                🔄 On Going
+            </span>
         @endif
         
         <a href="{{ route('employee.tasks.submit.form', $task) }}" 

@@ -90,7 +90,9 @@ class EmployeeTaskController extends Controller
                 'progress' => 50,
                 'actual_start_date' => $task->actual_start_date ?? now()->toDateString(),
             ]);
-            return redirect()->route('employee.tasks.index')
+            app(MilestoneService::class)->updateMilestoneStatus($task);
+
+            return redirect()->route('employee.tasks.show', $task)
                 ->with('success', '🚀 Status task diubah menjadi "Dalam Pengerjaan"!');
         }
 
