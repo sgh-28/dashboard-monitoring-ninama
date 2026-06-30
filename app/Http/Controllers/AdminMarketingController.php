@@ -67,7 +67,11 @@ class AdminMarketingController extends Controller
     {
         return Excel::download(
             new MarketingOffersExport($category),
-            'laporan-marketing-' . ($category ?? 'semua') . '-' . date('Y-m-d') . '.xlsx'
+            'laporan-marketing-' . ($category ?? 'semua') . '-' . date('Y-m-d') . '.xlsx',
+            null,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]
         );
     }
 }

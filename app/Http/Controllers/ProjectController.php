@@ -103,7 +103,11 @@ class ProjectController extends Controller
     {
         return Excel::download(
             new ProjectsExport($category),
-            'laporan-proyek-' . ($category ?? 'semua') . '-' . date('Y-m-d') . '.xlsx'
+            'laporan-proyek-' . ($category ?? 'semua') . '-' . date('Y-m-d') . '.xlsx',
+            null,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]
         );
     }
 }

@@ -202,7 +202,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/export/all', function() {
             return Excel::download(
                 new \App\Exports\DirectorReportExport(), 
-                'laporan-lengkap-direktur-'.date('Y-m-d').'.xlsx'
+                'laporan-lengkap-direktur-'.date('Y-m-d').'.xlsx',
+                null,
+                [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ]
             );
         })->name('export.all');
         
