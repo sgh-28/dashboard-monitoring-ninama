@@ -66,6 +66,7 @@ class AdminTaskController extends Controller
         $division = ProjectDivision::where('project_id', $project->id)->findOrFail($divisionId);
         
         $assignee = User::where('jabatan', $division->name)
+            ->where('bidang', $project->category)
             ->whereHas('role', function($q) {
                 $q->where('name', 'pegawai');
             })
