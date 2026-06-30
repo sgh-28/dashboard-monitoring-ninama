@@ -7,7 +7,7 @@ use App\Models\ProjectTask;
 use App\Services\MilestoneService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class EmployeeTaskController extends Controller
 {
@@ -117,13 +117,18 @@ class EmployeeTaskController extends Controller
                     ->withErrors(['proof_image' => 'Format foto harus JPG, JPEG, atau PNG.']);
             }
 
-            if ($task->proof_image && Storage::disk('public')->exists($task->proof_image)) {
-                Storage::disk('public')->delete($task->proof_image);
+            if ($task->proof_image) {
+                $oldProofPath = storage_path('app/public/' . $task->proof_image);
+                if (File::exists($oldProofPath)) {
+                    File::delete($oldProofPath);
+                }
             }
 
             $fileName = 'task-' . $task->id . '-' . now()->format('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $extension;
-            $path = $file->storeAs('task_proofs', $fileName, 'public');
-            $validated['proof_image'] = $path;
+            $directory = storage_path('app/public/task_proofs');
+            File::ensureDirectoryExists($directory);
+            $file->move($directory, $fileName);
+            $validated['proof_image'] = 'task_proofs/' . $fileName;
         }
 
         $validated['status'] = 'done';
