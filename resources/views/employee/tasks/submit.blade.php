@@ -25,7 +25,6 @@
     <form action="{{ route('employee.tasks.submit', $task) }}" method="POST" enctype="multipart/form-data" 
           class="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
         @csrf
-        @method('PUT')
 
         {{-- KETERANGAN (WAJIB) --}}
         <div>
