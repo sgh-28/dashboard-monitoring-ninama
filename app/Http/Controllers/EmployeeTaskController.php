@@ -99,17 +99,30 @@ class EmployeeTaskController extends Controller
         // Submit selesai (dengan bukti)
         $validated = $request->validate([
             'completion_notes' => 'required|string|max:1000',
-            'proof_image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'proof_image' => 'required|file|max:5120',
         ], [
             'completion_notes.required' => 'Keterangan pengerjaan wajib diisi.',
             'proof_image.required' => 'Bukti pengerjaan (foto) wajib diupload.',
+            'proof_image.max' => 'Ukuran foto maksimal 5 MB.',
         ]);
 
         if ($request->hasFile('proof_image')) {
+            $file = $request->file('proof_image');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $allowedExtensions = ['jpg', 'jpeg', 'png'];
+
+            if (!in_array($extension, $allowedExtensions, true)) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['proof_image' => 'Format foto harus JPG, JPEG, atau PNG.']);
+            }
+
             if ($task->proof_image && Storage::disk('public')->exists($task->proof_image)) {
                 Storage::disk('public')->delete($task->proof_image);
             }
-            $path = $request->file('proof_image')->store('task_proofs', 'public');
+
+            $fileName = 'task-' . $task->id . '-' . now()->format('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $extension;
+            $path = $file->storeAs('task_proofs', $fileName, 'public');
             $validated['proof_image'] = $path;
         }
 
