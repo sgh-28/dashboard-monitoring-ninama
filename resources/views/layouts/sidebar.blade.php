@@ -133,7 +133,7 @@
             <span class="flex-1">Laporan Marketing</span>
             @if(($userRole ?? '') === 'super_admin' && $marketingNeedsAccountCount > 0)
                 <span title="{{ $marketingNeedsAccountCount }} penawaran perlu dibuatkan akun customer"
-                      class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-yellow-400 px-1.5 text-xs font-bold text-gray-900">
+                      class="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-white/80 bg-amber-500 px-1.5 text-xs font-bold text-white shadow-sm">
                     {{ $marketingNeedsAccountCount }}
                 </span>
             @endif
