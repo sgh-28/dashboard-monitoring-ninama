@@ -53,6 +53,11 @@ class MarketingOffer extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function histories()
+    {
+        return $this->hasMany(MarketingOfferHistory::class);
+    }
+
     public function hasCustomerAccount(): bool
     {
         return User::whereHas('role', fn($q) => $q->where('name', 'customer'))
@@ -109,7 +114,12 @@ class MarketingOffer extends Model
      */
     public function getStatusLabelAttribute()
     {
-        $labels = [
+        return self::statusLabels()[$this->status] ?? $this->status;
+    }
+
+    public static function statusLabels(): array
+    {
+        return [
             'penawaran' => 'Penawaran',
             'follow_up' => 'Follow Up',
             'meeting' => 'Meeting',
@@ -120,8 +130,6 @@ class MarketingOffer extends Model
             'rejected' => 'Ditolak',
             'no_response' => 'No Response',
         ];
-
-        return $labels[$this->status] ?? $this->status;
     }
 
     /**
