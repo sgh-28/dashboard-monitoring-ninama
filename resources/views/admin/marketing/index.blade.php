@@ -104,6 +104,21 @@
                                 'no_response' => 'bg-red-900/50 text-red-300',
                             ];
                             $needsAccount = $offer->needsCustomerAccount();
+                            $isAdmin = (Auth::user()?->role?->name ?? '') === 'super_admin';
+                            $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
+                                . "Nama Perusahaan: {$offer->company_name}\n"
+                                . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"
+                                . "Jabatan: " . ($offer->contact_position ?: '-') . "\n"
+                                . "Email: " . ($offer->contact_email ?: '-') . "\n"
+                                . "Nomor HP: " . ($offer->contact_phone ?: '-') . "\n"
+                                . "Alamat: {$offer->company_address}\n\n"
+                                . "DATA PROJECT\n"
+                                . "Nama Project: " . ($offer->offer_description ?: $offer->company_name) . "\n"
+                                . "Bidang: " . ucfirst($offer->category) . "\n"
+                                . "Nilai Penawaran: " . ($offer->estimated_value ? 'Rp ' . number_format((float) $offer->estimated_value, 0, ',', '.') : '-') . "\n"
+                                . "Tanggal Deal/Penawaran: " . ($offer->offer_date ? $offer->offer_date->format('d/m/Y') : '-') . "\n"
+                                . "Marketing: " . ($offer->employee?->name ?: '-') . "\n"
+                                . "Catatan: " . ($offer->notes ?: '-');
                         @endphp
                         <tr class="hover:bg-gray-700/30 transition">
                             <td class="px-4 py-3">
@@ -151,10 +166,19 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right">
+                                <div class="flex flex-col items-end gap-2">
+                                @if($isAdmin && $needsAccount)
+                                    <button type="button"
+                                            class="copy-offer-btn inline-flex items-center justify-center rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-emerald-700"
+                                            data-copy="{{ e($copyText) }}">
+                                        Copy Data
+                                    </button>
+                                @endif
                                 <a href="{{ route('admin.marketing.show', $offer) }}"
                                    class="inline-flex items-center justify-center rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-700">
                                     Detail / Riwayat
                                 </a>
+                                </div>
                             </td>
                         </tr>
                     @empty
