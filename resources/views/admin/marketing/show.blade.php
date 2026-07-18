@@ -76,17 +76,6 @@
 
         <div class="space-y-6">
             <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Project / Task</h2>
-                @if($offer->project)
-                    <p class="font-semibold text-white">{{ $offer->project->name }}</p>
-                    <p class="text-sm text-gray-400 mt-1">{{ $offer->project->divisions_count }} divisi, {{ $offer->project->tasks_count }} task</p>
-                    <a href="{{ route('projects.detail', $offer->project) }}" class="mt-4 inline-flex rounded bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700">Lihat Project</a>
-                @else
-                    <p class="text-sm text-gray-500">Belum dibuat project.</p>
-                @endif
-            </div>
-
-            <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
                 <h2 class="text-lg font-semibold text-white mb-4">Riwayat Update</h2>
 
                 @if($histories->isNotEmpty())
@@ -98,7 +87,7 @@
                                         <p class="text-sm font-semibold text-white">{{ $history->status_label }}</p>
                                         <p class="text-xs text-gray-400">Follow up: {{ $history->follow_up_date?->format('d/m/Y') ?? '-' }}</p>
                                     </div>
-                                    <p class="text-xs text-gray-500">{{ $history->created_at?->format('d/m/Y H:i') }}</p>
+                                    <p class="text-xs text-gray-500">Diupdate: {{ $history->created_at?->format('d/m/Y H:i') }}</p>
                                 </div>
                                 <p class="mt-3 text-xs text-gray-500">Keterangan:</p>
                                 <p class="text-sm text-gray-300 whitespace-pre-line">{{ $history->notes ?: '-' }}</p>
