@@ -61,6 +61,12 @@ class AdminMarketingController extends Controller
      */
     public function show(MarketingOffer $offer)
     {
+        $offer->load([
+            'employee',
+            'histories.changedBy',
+            'project' => fn ($projectQuery) => $projectQuery->withCount(['divisions', 'tasks']),
+        ]);
+
         return view('admin.marketing.show', compact('offer'));
     }
 
