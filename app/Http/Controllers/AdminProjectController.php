@@ -91,9 +91,11 @@ class AdminProjectController extends Controller
         } elseif ($request->filled('new_customer_company')) {
             $request->validate([
                 'new_customer_company' => 'required|string|max:255',
-                'new_customer_name' => 'required|string|max:255',
+                'new_customer_name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\.\'-]+$/u'],
                 'new_customer_email' => 'required|email|unique:users,email',
                 'new_customer_password' => 'required|min:6|confirmed',
+            ], [
+                'new_customer_name.regex' => 'Nama PIC hanya boleh berisi huruf, spasi, titik, apostrof, dan tanda hubung.',
             ]);
 
             $role = Role::where('name', 'customer')->firstOrFail();

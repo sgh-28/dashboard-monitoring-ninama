@@ -66,7 +66,9 @@
                                 <label class="block text-xs text-gray-400 mb-1">Nama Contact Person *</label>
                                 <input type="text" name="new_customer_name" value="{{ old('new_customer_name') }}" 
                                        class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-sm text-white"
-                                       placeholder="Nama PIC">
+                                       placeholder="Nama PIC"
+                                       pattern="[A-Za-zÀ-ÿ\s.'-]+"
+                                       title="Nama PIC hanya boleh berisi huruf, spasi, titik, apostrof, dan tanda hubung.">
                                 @error('new_customer_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
@@ -203,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const existingCustomerSelect = document.getElementById('existing-customer');
     const pasteButton = document.getElementById('paste-marketing-data');
     const pasteStatus = document.getElementById('paste-status');
+    const picNameInput = document.querySelector('[name="new_customer_name"]');
     
     if (!categorySelect || !divisionsContainer) return;
 
@@ -210,9 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const field = document.querySelector(`[name="${name}"]`);
         if (!field || value === undefined || value === null) return;
 
-        field.value = value;
+        field.value = name === 'new_customer_name' ? sanitizePersonName(value) : value;
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function sanitizePersonName(value) {
+        return (value || '').replace(/[0-9]/g, '');
     }
 
     function showPasteStatus(message, type = 'success') {
@@ -362,6 +369,12 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 showPasteStatus('Browser tidak mengizinkan akses clipboard. Klik Copy Data lagi, lalu coba Paste Data Marketing.', 'error');
             }
+        });
+    }
+
+    if (picNameInput) {
+        picNameInput.addEventListener('input', function () {
+            this.value = sanitizePersonName(this.value);
         });
     }
 
