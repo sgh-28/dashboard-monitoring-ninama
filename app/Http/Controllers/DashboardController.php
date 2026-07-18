@@ -74,6 +74,17 @@ class DashboardController extends Controller
         return view('direktur.dashboard', compact('categoryStats', 'recentProjects', 'marketingOffers', 'marketingStats'));
     }
 
+    public function showDirectorMarketingOffer(MarketingOffer $offer)
+    {
+        $offer->load([
+            'employee',
+            'histories.changedBy',
+            'project' => fn ($projectQuery) => $projectQuery->withCount(['divisions', 'tasks']),
+        ]);
+
+        return view('direktur.marketing-show', compact('offer'));
+    }
+
     /**
      * Helper: Hitung Statistik Proyek
      */

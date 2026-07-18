@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
             'project_divisions',
             'project_phases',
             'marketing_offers',
+            'marketing_offer_histories',
             'users',
         ];
 
@@ -223,6 +224,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:direktur'])->prefix('direktur')->name('direktur.')->group(function () {
         // ✅ Menggunakan method indexDirector agar view-nya beda (ada tombol export)
         Route::get('/dashboard', [DashboardController::class, 'indexDirector'])->name('dashboard');
+        Route::get('/marketing/{offer}', [DashboardController::class, 'showDirectorMarketingOffer'])->name('marketing.show');
         
         Route::get('/reports', function () {
             return view('direktur.dashboard'); 

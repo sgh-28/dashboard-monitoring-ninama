@@ -314,6 +314,7 @@
                         <th class="pb-3 font-medium">Penawaran</th>
                         <th class="pb-3 font-medium">Progress</th>
                         <th class="pb-3 font-medium">Project / Task</th>
+                        <th class="pb-3 font-medium text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-700">
@@ -367,10 +368,16 @@
                                     <span class="text-xs text-gray-500">Belum dibuat project</span>
                                 @endif
                             </td>
+                            <td class="py-3 text-right">
+                                <a href="{{ route('direktur.marketing.show', $offer) }}"
+                                   class="inline-flex items-center justify-center rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-700">
+                                    Detail / Riwayat
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-6 text-center text-gray-500">
+                            <td colspan="6" class="py-6 text-center text-gray-500">
                                 Belum ada laporan marketing.
                             </td>
                         </tr>
