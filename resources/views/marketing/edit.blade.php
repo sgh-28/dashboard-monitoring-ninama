@@ -80,7 +80,7 @@
 
         <div>
             <button type="button"
-                    id="toggle-offer-update"
+                    id="add-offer-update"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
                 <span class="text-lg leading-none">+</span>
                 Update Penawaran
@@ -89,43 +89,45 @@
 
         <div id="offer-update-panel" class="{{ ($errors->has('status') || $errors->has('follow_up_date') || $errors->has('meeting_date') || $errors->has('reason') || $errors->has('notes')) ? '' : 'hidden' }} rounded-lg border border-gray-700 bg-gray-900/30 p-5">
             <h2 class="text-lg font-semibold text-white mb-4">Perubahan Status Penawaran</h2>
+            <input type="hidden" name="has_status_update" id="has-status-update" value="{{ ($errors->has('status') || $errors->has('follow_up_date') || $errors->has('meeting_date') || $errors->has('reason') || $errors->has('notes')) ? '1' : '0' }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-sm text-gray-400 mb-1">Progress Penawaran *</label>
-                    <select name="status" required class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                        <option value="penawaran" {{ old('status', $offer->status) === 'penawaran' ? 'selected' : '' }}>Penawaran</option>
-                        <option value="follow_up" {{ old('status', $offer->status) === 'follow_up' ? 'selected' : '' }}>Follow Up</option>
-                        <option value="meeting" {{ old('status', $offer->status) === 'meeting' ? 'selected' : '' }}>Meeting</option>
-                        <option value="menunggu_keputusan" {{ old('status', $offer->status) === 'menunggu_keputusan' ? 'selected' : '' }}>Menunggu Keputusan Customer</option>
-                        <option value="negosiasi" {{ old('status', $offer->status) === 'negosiasi' ? 'selected' : '' }}>Negosiasi</option>
-                        <option value="pending" {{ old('status', $offer->status) === 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="rejected" {{ old('status', $offer->status) === 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                        <option value="no_response" {{ old('status', $offer->status) === 'no_response' ? 'selected' : '' }}>No Response</option>
-                        <option value="deal" {{ old('status', $offer->status) === 'deal' ? 'selected' : '' }}>Deal</option>
+                    <select name="status" required data-update-field class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                        <option value="">Pilih progress terbaru</option>
+                        <option value="penawaran" {{ old('status') === 'penawaran' ? 'selected' : '' }}>Penawaran</option>
+                        <option value="follow_up" {{ old('status') === 'follow_up' ? 'selected' : '' }}>Follow Up</option>
+                        <option value="meeting" {{ old('status') === 'meeting' ? 'selected' : '' }}>Meeting</option>
+                        <option value="menunggu_keputusan" {{ old('status') === 'menunggu_keputusan' ? 'selected' : '' }}>Menunggu Keputusan Customer</option>
+                        <option value="negosiasi" {{ old('status') === 'negosiasi' ? 'selected' : '' }}>Negosiasi</option>
+                        <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="rejected" {{ old('status') === 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                        <option value="no_response" {{ old('status') === 'no_response' ? 'selected' : '' }}>No Response</option>
+                        <option value="deal" {{ old('status') === 'deal' ? 'selected' : '' }}>Deal</option>
                     </select>
                     @error('status') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Tanggal Follow Up</label>
-                    <input type="date" name="follow_up_date" value="{{ old('follow_up_date', $offer->follow_up_date?->format('Y-m-d')) }}" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <input type="date" name="follow_up_date" value="{{ old('follow_up_date') }}" data-update-field class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Jadwal Meeting</label>
-                    <input type="datetime-local" name="meeting_date" value="{{ old('meeting_date', $offer->meeting_date ? $offer->meeting_date->format('Y-m-d\TH:i') : '') }}" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <input type="datetime-local" name="meeting_date" value="{{ old('meeting_date') }}" data-update-field class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm text-gray-400 mb-1">Alasan / Kendala</label>
-                    <textarea name="reason" rows="2" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">{{ old('reason', $offer->reason) }}</textarea>
+                    <textarea name="reason" rows="2" data-update-field class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">{{ old('reason') }}</textarea>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm text-gray-400 mb-1">Catatan Tambahan</label>
-                    <textarea name="notes" rows="2" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">{{ old('notes', $offer->notes) }}</textarea>
+                    <textarea name="notes" rows="2" data-update-field class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">{{ old('notes') }}</textarea>
                 </div>
             </div>
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-white mb-4">Riwayat Status Penawaran</h2>
+            <h2 class="text-lg font-semibold text-white mb-4">Riwayat Update Penawaran</h2>
 
             @php
                 $histories = $offer->histories ?? collect();
@@ -144,7 +146,7 @@
                                     </p>
                                 </div>
                                 <div class="text-xs text-gray-500 md:text-right">
-                                    <p>{{ $history->created_at?->format('d/m/Y H:i') }}</p>
+                                    <p>Diupdate: {{ $history->created_at?->format('d/m/Y H:i') }}</p>
                                     <p>{{ $history->changedBy?->name ?? 'Marketing' }}</p>
                                 </div>
                             </div>
@@ -172,26 +174,34 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const toggleButton = document.getElementById('toggle-offer-update');
+    const addButton = document.getElementById('add-offer-update');
     const updatePanel = document.getElementById('offer-update-panel');
+    const statusUpdateFlag = document.getElementById('has-status-update');
+    const updateFields = document.querySelectorAll('[data-update-field]');
 
-    if (!toggleButton || !updatePanel) {
+    if (!addButton || !updatePanel || !statusUpdateFlag) {
         return;
     }
 
-    function updateToggleText() {
-        const isHidden = updatePanel.classList.contains('hidden');
-        toggleButton.innerHTML = isHidden
-            ? '<span class="text-lg leading-none">+</span> Update Penawaran'
-            : '<span class="text-lg leading-none">-</span> Tutup Update Penawaran';
+    function setUpdateFieldsEnabled(enabled) {
+        updateFields.forEach(function (field) {
+            field.disabled = !enabled;
+        });
     }
 
-    toggleButton.addEventListener('click', function () {
-        updatePanel.classList.toggle('hidden');
-        updateToggleText();
+    addButton.addEventListener('click', function () {
+        updatePanel.classList.remove('hidden');
+        statusUpdateFlag.value = '1';
+        setUpdateFieldsEnabled(true);
+        addButton.classList.add('hidden');
     });
 
-    updateToggleText();
+    const panelIsOpen = !updatePanel.classList.contains('hidden');
+    setUpdateFieldsEnabled(panelIsOpen);
+    if (panelIsOpen) {
+        statusUpdateFlag.value = '1';
+        addButton.classList.add('hidden');
+    }
 });
 </script>
 @endpush

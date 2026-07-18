@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MarketingOffer;
+use App\Models\MarketingOfferHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -96,6 +97,8 @@ class MarketingOfferController extends Controller
      */
     public function edit(MarketingOffer $offer)
     {
+        $offer->load(['histories.changedBy']);
+
         return view('marketing.edit', compact('offer'));
     }
 
@@ -115,14 +118,50 @@ class MarketingOfferController extends Controller
             'offer_description' => 'nullable|string',
             'estimated_value' => 'nullable|numeric|min:0',
             'offer_date' => 'required|date',
+            'has_status_update' => 'nullable|boolean',
             'follow_up_date' => 'nullable|date',
             'meeting_date' => 'nullable|date',
-            'status' => 'required|in:penawaran,follow_up,meeting,menunggu_keputusan,negosiasi,deal,pending,rejected,no_response',
+            'status' => 'nullable|in:penawaran,follow_up,meeting,menunggu_keputusan,negosiasi,deal,pending,rejected,no_response',
             'reason' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
 
+        $hasStatusUpdate = $request->boolean('has_status_update') && $request->filled('status');
+
+        if (!$hasStatusUpdate) {
+            unset(
+                $validated['has_status_update'],
+                $validated['status'],
+                $validated['follow_up_date'],
+                $validated['meeting_date'],
+                $validated['reason'],
+                $validated['notes']
+            );
+
+            $offer->update($validated);
+
+            return redirect()->route('marketing.index')->with('success', 'Data penawaran berhasil diupdate!');
+        }
+
+        unset($validated['has_status_update']);
+
+        $shouldSaveHistory = $offer->status !== $validated['status']
+            || ($offer->follow_up_date?->format('Y-m-d') ?? '') !== ($validated['follow_up_date'] ?? '')
+            || ($offer->meeting_date?->format('Y-m-d\TH:i') ?? '') !== ($validated['meeting_date'] ?? '')
+            || (string) ($offer->reason ?? '') !== (string) ($validated['reason'] ?? '')
+            || (string) ($offer->notes ?? '') !== (string) ($validated['notes'] ?? '');
+
         $offer->update($validated);
+
+        if ($shouldSaveHistory) {
+            MarketingOfferHistory::create([
+                'marketing_offer_id' => $offer->id,
+                'changed_by' => Auth::id(),
+                'status' => $validated['status'],
+                'follow_up_date' => $validated['follow_up_date'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+        }
 
         return redirect()->route('marketing.index')->with('success', 'Data penawaran berhasil diupdate!');
     }
