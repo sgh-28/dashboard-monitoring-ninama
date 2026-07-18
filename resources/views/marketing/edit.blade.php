@@ -79,6 +79,15 @@
         </div>
 
         <div>
+            <button type="button"
+                    id="toggle-offer-update"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
+                <span class="text-lg leading-none">+</span>
+                Update Penawaran
+            </button>
+        </div>
+
+        <div id="offer-update-panel" class="{{ ($errors->has('status') || $errors->has('follow_up_date') || $errors->has('meeting_date') || $errors->has('reason') || $errors->has('notes')) ? '' : 'hidden' }} rounded-lg border border-gray-700 bg-gray-900/30 p-5">
             <h2 class="text-lg font-semibold text-white mb-4">Perubahan Status Penawaran</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
@@ -115,10 +124,71 @@
             </div>
         </div>
 
+        <div>
+            <h2 class="text-lg font-semibold text-white mb-4">Riwayat Status Penawaran</h2>
+
+            @if($offer->histories->isNotEmpty())
+                <div class="space-y-3">
+                    @foreach($offer->histories->sortByDesc('created_at') as $history)
+                        <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                            <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-white">{{ $history->status_label }}</p>
+                                    <p class="text-xs text-gray-400">
+                                        Tanggal follow up:
+                                        {{ $history->follow_up_date?->format('d/m/Y') ?? '-' }}
+                                    </p>
+                                </div>
+                                <div class="text-xs text-gray-500 md:text-right">
+                                    <p>{{ $history->created_at?->format('d/m/Y H:i') }}</p>
+                                    <p>{{ $history->changedBy?->name ?? 'Marketing' }}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 rounded border border-gray-700 bg-gray-800 p-3">
+                                <p class="text-xs text-gray-500 mb-1">Keterangan:</p>
+                                <p class="text-sm text-gray-300 whitespace-pre-line">{{ $history->notes ?: '-' }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
+                    Belum ada riwayat perubahan status.
+                </div>
+            @endif
+        </div>
+
         <div class="flex gap-3 pt-4 border-t border-gray-700">
-            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">Update Penawaran</button>
+            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">Simpan Perubahan</button>
             <a href="{{ route('marketing.index') }}" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition font-medium">Batal</a>
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleButton = document.getElementById('toggle-offer-update');
+    const updatePanel = document.getElementById('offer-update-panel');
+
+    if (!toggleButton || !updatePanel) {
+        return;
+    }
+
+    function updateToggleText() {
+        const isHidden = updatePanel.classList.contains('hidden');
+        toggleButton.innerHTML = isHidden
+            ? '<span class="text-lg leading-none">+</span> Update Penawaran'
+            : '<span class="text-lg leading-none">-</span> Tutup Update Penawaran';
+    }
+
+    toggleButton.addEventListener('click', function () {
+        updatePanel.classList.toggle('hidden');
+        updateToggleText();
+    });
+
+    updateToggleText();
+});
+</script>
+@endpush
 @endsection
