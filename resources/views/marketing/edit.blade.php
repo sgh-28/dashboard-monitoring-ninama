@@ -127,9 +127,13 @@
         <div>
             <h2 class="text-lg font-semibold text-white mb-4">Riwayat Status Penawaran</h2>
 
-            @if($offer->histories->isNotEmpty())
+            @php
+                $histories = $offer->histories ?? collect();
+            @endphp
+
+            @if($histories->isNotEmpty())
                 <div class="space-y-3">
-                    @foreach($offer->histories->sortByDesc('created_at') as $history)
+                    @foreach($histories->sortByDesc('created_at') as $history)
                         <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
                             <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                                 <div>
