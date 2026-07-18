@@ -39,6 +39,7 @@ class EmployeeTaskController extends Controller
             $managedProjects = Project::withCount([
                     'tasks',
                     'tasks as completed_tasks_count' => fn($q) => $q->where('status', 'done'),
+                    'tasks as approved_tasks_count' => fn($q) => $q->where('verification_status', 'approved'),
                 ])
                 ->whereHas('tasks', function ($q) use ($user) {
                     $q->where('assigned_to', $user->id)
@@ -50,6 +51,35 @@ class EmployeeTaskController extends Controller
         }
         
         return view('employee.tasks.index', compact('tasks', 'managedProjects'));
+    }
+
+    public function showManagedProject(Project $project)
+    {
+        $user = Auth::user();
+
+        if (!$this->canManageProject($project, $user)) {
+            abort(403, 'Anda tidak berhak mengakses proyek ini.');
+        }
+
+        $project->load([
+            'phases' => fn($q) => $q->orderBy('phase_order'),
+            'customer',
+            'tasks.division',
+            'tasks.assignee',
+            'tasks.verifier',
+        ]);
+
+        $overallProgress = $project->overall_progress;
+        $slaStatus = $project->project_sla_status;
+        $timelineData = app(MilestoneService::class)->buildProjectTimeline($project);
+        $slaSummary = [
+            'on_track' => $project->phases->where('sla_status', 'on_track')->count(),
+            'warning' => $project->phases->where('sla_status', 'warning')->count(),
+            'breached' => $project->phases->where('sla_status', 'breached')->count(),
+        ];
+        $canVerifyTasks = true;
+
+        return view('projects.detail', compact('project', 'overallProgress', 'slaStatus', 'slaSummary', 'timelineData', 'canVerifyTasks'));
     }
 
     /**
@@ -88,6 +118,7 @@ class EmployeeTaskController extends Controller
             $task->update([
                 'status' => 'ongoing',
                 'progress' => 50,
+                'verification_status' => 'pending',
                 'actual_start_date' => $task->actual_start_date ?? now()->toDateString(),
             ]);
             app(MilestoneService::class)->updateMilestoneStatus($task);
@@ -132,6 +163,10 @@ class EmployeeTaskController extends Controller
         }
 
         $validated['status'] = 'done';
+        $validated['verification_status'] = 'pending_review';
+        $validated['verification_notes'] = null;
+        $validated['verified_by'] = null;
+        $validated['verified_at'] = null;
         $validated['completed_at'] = now();
         $validated['actual_start_date'] = $task->actual_start_date ?? now()->toDateString();
         $validated['actual_end_date'] = now()->toDateString();
@@ -144,6 +179,34 @@ class EmployeeTaskController extends Controller
         return redirect()->route('employee.tasks.index')
             ->with('success', '📤 Laporan pengerjaan berhasil dikirim!');
     }
+    public function approveTask(Request $request, ProjectTask $task)
+    {
+        $user = Auth::user();
+
+        if (!$this->canManageProject($task->project, $user)) {
+            abort(403, 'Anda tidak berhak memverifikasi task ini.');
+        }
+
+        if ($task->status !== 'done') {
+            return back()->with('error', 'Task belum selesai dikirim oleh pegawai.');
+        }
+
+        $validated = $request->validate([
+            'verification_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $task->update([
+            'verification_status' => 'approved',
+            'verification_notes' => $validated['verification_notes'] ?? null,
+            'verified_by' => $user->id,
+            'verified_at' => now(),
+        ]);
+
+        app(MilestoneService::class)->updateMilestoneStatus($task);
+
+        return back()->with('success', "Task {$task->title} berhasil disetujui.");
+    }
+
     public function completeProject(Project $project)
     {
         $user = Auth::user();
@@ -154,6 +217,7 @@ class EmployeeTaskController extends Controller
 
         $totalTasks = $project->tasks()->count();
         $unfinishedTasks = $project->tasks()->where('status', '!=', 'done')->count();
+        $unapprovedTasks = $project->tasks()->where('verification_status', '!=', 'approved')->count();
 
         if ($totalTasks === 0) {
             return back()->with('error', 'Proyek belum memiliki task.');
@@ -161,6 +225,10 @@ class EmployeeTaskController extends Controller
 
         if ($unfinishedTasks > 0) {
             return back()->with('error', "Masih ada {$unfinishedTasks} task yang belum selesai.");
+        }
+
+        if ($unapprovedTasks > 0) {
+            return back()->with('error', "Masih ada {$unapprovedTasks} task yang belum disetujui Project Management.");
         }
 
         $project->update([
@@ -180,6 +248,11 @@ class EmployeeTaskController extends Controller
     }
 
     private function canCompleteProject(Project $project, $user): bool
+    {
+        return $this->canManageProject($project, $user);
+    }
+
+    private function canManageProject(Project $project, $user): bool
     {
         if (!$this->isProjectManagementUser($user)) {
             return false;

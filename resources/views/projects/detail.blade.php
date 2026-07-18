@@ -7,7 +7,7 @@
     {{-- HEADER --}}
     <div class="mb-6 flex justify-between items-start">
         <div>
-            <a href="{{ route('projects.category.detail', ['category' => $project->category]) }}" 
+            <a href="{{ (Auth::user()?->role?->name ?? '') === 'pegawai' ? route('employee.tasks.index') : route('projects.category.detail', ['category' => $project->category]) }}" 
                class="text-blue-400 hover:underline text-sm mb-2 inline-block">
                ← Kembali ke Daftar Proyek
             </a>
@@ -43,6 +43,8 @@
             </div>
             <span class="text-xs text-gray-400">
                 {{ $project->tasks->where('status', 'done')->count() }}/{{ $project->tasks->count() }} task selesai
+                <span class="mx-2">|</span>
+                {{ $project->tasks->where('verification_status', 'approved')->count() }}/{{ $project->tasks->count() }} task disetujui PM
             </span>
         </div>
 
@@ -55,6 +57,7 @@
                             <th class="px-4 py-3 text-left">Divisi</th>
                             <th class="px-4 py-3 text-left">Pegawai</th>
                             <th class="px-4 py-3 text-left">Status</th>
+                            <th class="px-4 py-3 text-left">Verifikasi PM</th>
                             <th class="px-4 py-3 text-left">Deadline</th>
                             <th class="px-4 py-3 text-left">Laporan Pengerjaan</th>
                         </tr>
@@ -93,6 +96,17 @@
                                         <p class="text-xs text-red-400 mt-2">Terlambat {{ $lateDays }} hari</p>
                                     @endif
                                 </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 text-xs rounded-full {{ $task->verification_status_color }}">
+                                        {{ $task->verification_status_label }}
+                                    </span>
+                                    @if($task->verified_at)
+                                        <p class="text-xs text-gray-500 mt-2">{{ $task->verified_at->format('d/m/Y H:i') }}</p>
+                                    @endif
+                                    @if($task->verifier)
+                                        <p class="text-xs text-gray-500">{{ $task->verifier->name }}</p>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-gray-300">
                                     {{ $deadline ? $deadline->format('d/m/Y') : '-' }}
                                 </td>
@@ -109,6 +123,24 @@
                                             </a>
                                         @else
                                             <p class="text-xs text-gray-500 mt-2">Bukti foto belum tersedia.</p>
+                                        @endif
+                                        @if(isset($canVerifyTasks) && $canVerifyTasks && $task->verification_status !== 'approved')
+                                            <form action="{{ route('employee.tasks.tasks.approve', $task) }}" method="POST" class="mt-3 space-y-2">
+                                                @csrf
+                                                <textarea name="verification_notes" rows="2"
+                                                          class="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-white"
+                                                          placeholder="Catatan verifikasi Project Management"></textarea>
+                                                <button type="submit"
+                                                        class="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-green-700">
+                                                    Approve Task
+                                                </button>
+                                            </form>
+                                        @endif
+                                        @if($task->verification_notes)
+                                            <div class="mt-3 rounded border border-gray-700 bg-gray-900/40 p-2">
+                                                <p class="text-xs text-gray-500 mb-1">Catatan PM:</p>
+                                                <p class="text-xs text-gray-300 whitespace-pre-line">{{ $task->verification_notes }}</p>
+                                            </div>
                                         @endif
                                     @else
                                         <span class="text-xs text-gray-500">Belum ada laporan.</span>

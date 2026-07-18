@@ -22,9 +22,13 @@ class ProjectTask extends Model
         'assigned_to',
         'deadline',
         'status',
+        'verification_status',
         'progress',
         'proof_image',
         'completion_notes',
+        'verification_notes',
+        'verified_by',
+        'verified_at',
         'completed_at',
         // ✅ NEW FIELDS FOR TIMELINE & SLA
         'sla_target',
@@ -43,6 +47,7 @@ class ProjectTask extends Model
     protected $casts = [
         'deadline' => 'date',
         'completed_at' => 'datetime',
+        'verified_at' => 'datetime',
         'progress' => 'integer',
         // ✅ NEW CASTS
         'planned_start_date' => 'date',
@@ -75,6 +80,11 @@ class ProjectTask extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
     /**
@@ -180,6 +190,24 @@ class ProjectTask extends Model
             'ongoing', 'in_progress' => 'Sedang Dikerjakan',
             'pending' => 'Menunggu',
             default => ucfirst($this->status),
+        };
+    }
+
+    public function getVerificationStatusLabelAttribute(): string
+    {
+        return match($this->verification_status) {
+            'pending_review' => 'Menunggu Verifikasi PM',
+            'approved' => 'Disetujui PM',
+            default => 'Belum Diverifikasi',
+        };
+    }
+
+    public function getVerificationStatusColorAttribute(): string
+    {
+        return match($this->verification_status) {
+            'pending_review' => 'bg-yellow-500/20 text-yellow-300',
+            'approved' => 'bg-green-500/20 text-green-400',
+            default => 'bg-gray-500/20 text-gray-400',
         };
     }
 

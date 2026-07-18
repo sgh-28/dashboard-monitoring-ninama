@@ -25,7 +25,9 @@
                     @php
                         $totalTasks = $project->tasks_count;
                         $completedTasks = $project->completed_tasks_count;
+                        $approvedTasks = $project->approved_tasks_count ?? 0;
                         $allTasksDone = $totalTasks > 0 && $completedTasks === $totalTasks;
+                        $allTasksApproved = $totalTasks > 0 && $approvedTasks === $totalTasks;
                         $projectProgress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
                     @endphp
 
@@ -35,24 +37,32 @@
                             <p class="text-xs text-gray-400 mt-1">
                                 {{ $completedTasks }}/{{ $totalTasks }} task selesai
                                 <span class="mx-2">|</span>
+                                {{ $approvedTasks }}/{{ $totalTasks }} task disetujui PM
+                                <span class="mx-2">|</span>
                                 Status: {{ ucfirst(str_replace('_', ' ', $project->status)) }}
                             </p>
                             <div class="mt-3 flex items-center gap-2 max-w-sm">
                                 <div class="flex-1 bg-gray-800 rounded-full h-2">
-                                    <div class="h-2 rounded-full {{ $allTasksDone ? 'bg-green-500' : 'bg-blue-500' }}" style="width: {{ $projectProgress }}%"></div>
+                                    <div class="h-2 rounded-full {{ $allTasksApproved ? 'bg-green-500' : ($allTasksDone ? 'bg-yellow-500' : 'bg-blue-500') }}" style="width: {{ $projectProgress }}%"></div>
                                 </div>
                                 <span class="text-xs text-gray-300">{{ $projectProgress }}%</span>
                             </div>
                         </div>
 
-                        <form action="{{ route('employee.tasks.projects.complete', $project) }}" method="POST" onsubmit="return confirm('Tandai proyek ini selesai? Pastikan semua task sudah dicek.')" class="shrink-0">
-                            @csrf
-                            <button type="submit"
-                                    class="px-4 py-2 text-sm rounded-lg transition font-medium {{ $allTasksDone ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-600 text-gray-300 cursor-not-allowed' }}"
-                                    {{ $allTasksDone ? '' : 'disabled' }}>
-                                Tandai Proyek Selesai
-                            </button>
-                        </form>
+                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                            <a href="{{ route('employee.tasks.projects.show', $project) }}"
+                               class="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition font-medium text-center">
+                                Detail Proyek
+                            </a>
+                            <form action="{{ route('employee.tasks.projects.complete', $project) }}" method="POST" onsubmit="return confirm('Tandai proyek ini selesai? Pastikan semua task sudah disetujui.')" class="shrink-0">
+                                @csrf
+                                <button type="submit"
+                                        class="px-4 py-2 text-sm rounded-lg transition font-medium {{ $allTasksApproved ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-600 text-gray-300 cursor-not-allowed' }}"
+                                        {{ $allTasksApproved ? '' : 'disabled' }}>
+                                    Tandai Proyek Selesai
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 @endforeach
             </div>
