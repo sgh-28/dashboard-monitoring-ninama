@@ -15,6 +15,8 @@ use App\Http\Controllers\MarketingOfferController;
 use App\Http\Controllers\AdminMarketingController;
 use App\Http\Controllers\AdminTaskController;
 use App\Http\Controllers\EmployeeTaskController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
 
 /*
@@ -50,6 +52,34 @@ Route::middleware(['auth', 'throttle:5,1'])->group(function () {
 
 // ==================== PROTECTED ROUTES ====================
 Route::middleware(['auth'])->group(function () {
+
+    Route::get('/realtime/version', function () {
+        $trackedTables = [
+            'projects',
+            'project_tasks',
+            'project_divisions',
+            'project_phases',
+            'marketing_offers',
+            'users',
+        ];
+
+        $versions = [];
+
+        foreach ($trackedTables as $table) {
+            if (!Schema::hasTable($table)) {
+                continue;
+            }
+
+            $versions[$table] = [
+                'count' => DB::table($table)->count(),
+                'updated_at' => DB::table($table)->max('updated_at'),
+            ];
+        }
+
+        return response()->json([
+            'version' => hash('sha256', json_encode($versions)),
+        ]);
+    })->name('realtime.version');
     
     // Dashboard Utama (Untuk Pegawai, Marketing, Customer)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('main.dashboard');

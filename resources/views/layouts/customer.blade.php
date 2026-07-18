@@ -165,6 +165,9 @@
             });
         })();
     </script>
+    @auth
+        @include('partials.realtime-polling')
+    @endauth
     @stack('scripts')
 </body>
 </html>
