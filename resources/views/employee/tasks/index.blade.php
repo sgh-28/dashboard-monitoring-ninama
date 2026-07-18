@@ -11,17 +11,45 @@
         </div>
     </div>
 
-    @if(isset($managedProjects) && $managedProjects->count() > 0)
+    @if($isProjectManagement ?? false)
         <div class="bg-gray-800 rounded-lg border border-gray-700 p-5 mb-6">
             <div class="flex justify-between items-start gap-4 mb-4">
                 <div>
-                    <h2 class="text-lg font-semibold text-white">Verifikasi Project Management</h2>
-                    <p class="text-sm text-gray-400">Tandai proyek selesai setelah seluruh task pegawai selesai dan sudah dicek.</p>
+                    <h2 class="text-lg font-semibold text-white">Dashboard Project Management</h2>
+                    <p class="text-sm text-gray-400">Monitoring proyek bidang {{ Auth::user()?->bidang_name }}, verifikasi task, dan penyelesaian proyek.</p>
                 </div>
             </div>
 
-            <div class="space-y-3">
-                @foreach($managedProjects as $project)
+            @if(isset($managedProjects) && $managedProjects->count() > 0)
+                @php
+                    $totalManagedProjects = $managedProjects->count();
+                    $totalManagedTasks = $managedProjects->sum('tasks_count');
+                    $totalCompletedTasks = $managedProjects->sum('completed_tasks_count');
+                    $totalApprovedTasks = $managedProjects->sum('approved_tasks_count');
+                    $managedProgress = $totalManagedTasks > 0 ? round(($totalCompletedTasks / $totalManagedTasks) * 100) : 0;
+                @endphp
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                    <div class="rounded-lg border border-gray-600 bg-gray-700/40 p-4">
+                        <p class="text-xs text-gray-400">Proyek Dikelola</p>
+                        <p class="text-2xl font-bold text-white">{{ $totalManagedProjects }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-600 bg-gray-700/40 p-4">
+                        <p class="text-xs text-gray-400">Total Task</p>
+                        <p class="text-2xl font-bold text-white">{{ $totalManagedTasks }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-600 bg-gray-700/40 p-4">
+                        <p class="text-xs text-gray-400">Task Disetujui</p>
+                        <p class="text-2xl font-bold text-green-400">{{ $totalApprovedTasks }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-600 bg-gray-700/40 p-4">
+                        <p class="text-xs text-gray-400">Progress</p>
+                        <p class="text-2xl font-bold text-blue-400">{{ $managedProgress }}%</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    @foreach($managedProjects as $project)
                     @php
                         $totalTasks = $project->tasks_count;
                         $completedTasks = $project->completed_tasks_count;
@@ -64,8 +92,13 @@
                             </form>
                         </div>
                     </div>
-                @endforeach
-            </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-lg border border-yellow-500/40 bg-yellow-900/20 p-4 text-sm text-yellow-100">
+                    Belum ada proyek yang dapat dikelola. Pastikan proyek sesuai bidang akun ini dan divisi Project Management dipilih saat admin membuat proyek.
+                </div>
+            @endif
         </div>
     @endif
 

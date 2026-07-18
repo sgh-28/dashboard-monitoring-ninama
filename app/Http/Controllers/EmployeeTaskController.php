@@ -33,24 +33,23 @@ class EmployeeTaskController extends Controller
             ->orderBy('deadline')
             ->paginate(10);
 
+        $isProjectManagement = $this->isProjectManagementUser($user);
         $managedProjects = collect();
 
-        if ($this->isProjectManagementUser($user)) {
+        if ($isProjectManagement) {
             $managedProjects = Project::withCount([
                     'tasks',
                     'tasks as completed_tasks_count' => fn($q) => $q->where('status', 'done'),
                     'tasks as approved_tasks_count' => fn($q) => $q->where('verification_status', 'approved'),
                 ])
-                ->whereHas('tasks', function ($q) use ($user) {
-                    $q->where('assigned_to', $user->id)
-                        ->whereHas('division', fn($division) => $division->where('name', 'Project Management'));
-                })
+                ->where('category', $user->bidang)
+                ->whereHas('divisions', fn($q) => $q->where('name', 'Project Management'))
                 ->whereNotIn('status', ['done', 'rejected'])
                 ->orderByDesc('updated_at')
                 ->get();
         }
         
-        return view('employee.tasks.index', compact('tasks', 'managedProjects'));
+        return view('employee.tasks.index', compact('tasks', 'managedProjects', 'isProjectManagement'));
     }
 
     public function showManagedProject(Project $project)
@@ -258,9 +257,9 @@ class EmployeeTaskController extends Controller
             return false;
         }
 
-        return $project->tasks()
-            ->where('assigned_to', $user->id)
-            ->whereHas('division', fn($q) => $q->where('name', 'Project Management'))
+        return $project->category === $user->bidang
+            && $project->divisions()
+                ->where('name', 'Project Management')
             ->exists();
     }
 }
