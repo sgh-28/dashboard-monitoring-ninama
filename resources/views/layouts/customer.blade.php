@@ -8,6 +8,7 @@
     <link rel="shortcut icon" type="image/png" href="{{ asset('images/logo-ninama.png') }}">
     <title>@yield('title', 'Portal Customer - Ninama')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <script>
         (function() {
             const theme = localStorage.getItem('theme');
@@ -133,6 +134,8 @@
             @yield('content')
         </main>
     </div>
+
+    @include('partials.loading-overlay')
 
     <script>
         (function() {

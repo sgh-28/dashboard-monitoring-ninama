@@ -79,5 +79,7 @@
             <p>customer@ninama.com / password</p>
         </div>
     </div>
+
+    @include('partials.loading-overlay')
 </body>
 </html>
