@@ -56,9 +56,9 @@ class User extends Authenticatable
         return $this->role && $this->role->name === $roleName;
     }
 
-    public function isSuperAdmin()
+    public function isAdmin()
     {
-        return $this->hasRole('super_admin');
+        return $this->hasRole('admin');
     }
 
     public function isDirektur()

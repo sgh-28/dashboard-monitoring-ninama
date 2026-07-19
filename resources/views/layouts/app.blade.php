@@ -113,13 +113,13 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                            {{ (Auth::user()?->role?->name ?? '') === 'super_admin' ? 'Admin' : (Auth::user()?->name ?? 'User') }}
+                            {{ (Auth::user()?->role?->name ?? '') === 'admin' ? 'Admin' : (Auth::user()?->name ?? 'User') }}
                         </p>
-                        {{-- ✅ PERBAIKAN: Mengubah super_admin menjadi Admin di tampilan --}}
+                        {{-- ✅ PERBAIKAN: Mengubah admin menjadi Admin di tampilan --}}
                         <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
                             @php
                                 $roleLabel = Auth::user()?->role?->name ?? 'user';
-                                if ($roleLabel === 'super_admin') $roleLabel = 'admin';
+                                if ($roleLabel === 'admin') $roleLabel = 'admin';
                             @endphp
                             {{ ucfirst(str_replace('_', ' ', $roleLabel)) }}
                         </p>

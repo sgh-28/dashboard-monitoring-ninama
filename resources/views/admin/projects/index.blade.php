@@ -16,7 +16,7 @@
                 @endif
             </p>
         </div>
-        {{-- ✅ Tombol Tambah Proyek hanya untuk Super Admin --}}
+        {{-- ✅ Tombol Tambah Proyek hanya untuk Admin --}}
         @if(Auth::user()->role->name !== 'direktur')
         <a href="{{ route('admin.projects.create') }}" 
            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">

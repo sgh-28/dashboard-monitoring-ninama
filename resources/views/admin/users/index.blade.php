@@ -70,9 +70,9 @@
                         <td class="px-6 py-4">
                             @php
                                 $roleName = $user->role->name;
-                                // ✅ Ubah label super_admin menjadi "Admin" di tampilan
+                                // ✅ Ubah label admin menjadi "Admin" di tampilan
                                 $roleLabel = match($roleName) {
-                                    'super_admin' => 'Admin',
+                                    'admin' => 'Admin',
                                     'pegawai' => 'Pegawai',
                                     'marketing' => 'Marketing',
                                     'direktur' => 'Direktur',
@@ -81,7 +81,7 @@
                                 };
                             @endphp
                             <span class="px-2 py-1 text-xs rounded-full 
-                                @if($roleName === 'super_admin') bg-red-900/50 text-red-300 border border-red-500/30
+                                @if($roleName === 'admin') bg-red-900/50 text-red-300 border border-red-500/30
                                 @elseif($roleName === 'pegawai') bg-green-900/50 text-green-300 border border-green-500/30
                                 @elseif($roleName === 'marketing') bg-yellow-900/50 text-yellow-300 border border-yellow-500/30
                                 @else bg-gray-700 text-gray-300 @endif">

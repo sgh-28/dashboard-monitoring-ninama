@@ -36,7 +36,7 @@ class LoginController extends Controller
 
             return match ($role) {
                 'direktur'    => redirect()->route('direktur.dashboard'),
-                'super_admin' => GoogleCalendarService::isConnected()
+                'admin' => GoogleCalendarService::isConnected()
                     ? redirect()->route('main.dashboard')
                     : redirect()->route('auth.google'),
                 'pegawai'     => redirect()->route('employee.tasks.index'),
@@ -58,7 +58,7 @@ class LoginController extends Controller
     {
         $user = Auth::user();
 
-        if (($user->role->name ?? null) === 'super_admin') {
+        if (($user->role->name ?? null) === 'admin') {
             app(GoogleCalendarService::class)->disconnect();
         }
 

@@ -104,7 +104,7 @@
                                 'no_response' => 'bg-red-900/50 text-red-300',
                             ];
                             $needsAccount = $offer->needsCustomerAccount();
-                            $isAdmin = (Auth::user()?->role?->name ?? '') === 'super_admin';
+                            $isAdmin = (Auth::user()?->role?->name ?? '') === 'admin';
                             $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
                                 . "Nama Perusahaan: {$offer->company_name}\n"
                                 . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"

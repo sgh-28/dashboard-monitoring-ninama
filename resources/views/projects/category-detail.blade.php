@@ -10,7 +10,7 @@
             @php
                 $userRole = Auth::user()?->role?->name ?? '';
                 $backRoute = match($userRole) {
-                    'super_admin' => 'admin.dashboard',
+                    'admin' => 'admin.dashboard',
                     'direktur' => 'direktur.dashboard',
                     'pegawai' => 'employee.dashboard',
                     'customer' => 'customer.dashboard',
@@ -60,7 +60,7 @@
                         {{ $p->name }}
                     </a>
                     
-                    @if(in_array($userRole, ['super_admin', 'direktur']))
+                    @if(in_array($userRole, ['admin', 'direktur']))
                         @php
                             $slaStatus = 'on_track';
                             if($p->deadline) {

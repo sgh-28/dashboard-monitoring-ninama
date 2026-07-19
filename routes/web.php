@@ -39,7 +39,7 @@ Route::get('/home', function () {
 })->middleware('auth');
 
 // ==================== GOOGLE CALENDAR OAUTH ROUTES (Harus Login Dulu) ====================
-Route::middleware(['auth', 'role:super_admin'])->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
@@ -88,10 +88,10 @@ Route::middleware(['auth'])->group(function () {
     // Detail Proyek dengan Timeline & SLA
     Route::get('/projects/{project}/detail', [ProjectController::class, 'showDetail'])
         ->name('projects.detail')
-        ->middleware(['role:super_admin,direktur']);
+        ->middleware(['role:admin,direktur']);
     
-    // ✅ EXPORT PROJECTS (Direktur/Super Admin)
-    Route::middleware(['role:super_admin,direktur'])->group(function () {
+    // ✅ EXPORT PROJECTS (Direktur/Admin)
+    Route::middleware(['role:admin,direktur'])->group(function () {
         Route::get('/projects/category/{category}/export', [ProjectController::class, 'exportProjects'])
             ->name('projects.export');
         Route::get('/projects/export', [ProjectController::class, 'exportProjects'])
@@ -99,7 +99,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Detail Kategori
-    Route::middleware(['role:super_admin,direktur'])->group(function () {
+    Route::middleware(['role:admin,direktur'])->group(function () {
         Route::get('/projects/category/{category}', [ProjectController::class, 'categoryDetail'])
             ->name('projects.category.detail')
             ->where('category', 'web|internet|cctv');
@@ -128,8 +128,8 @@ Route::middleware(['auth'])->group(function () {
     
     // ==================== TASK MANAGEMENT ROUTES ====================
     
-    // Admin Task Management (Super Admin Only)
-    Route::middleware(['role:super_admin'])->prefix('admin/tasks')->name('admin.tasks.')->group(function () {
+    // Admin Task Management (Admin Only)
+    Route::middleware(['role:admin'])->prefix('admin/tasks')->name('admin.tasks.')->group(function () {
         Route::get('/', [AdminTaskController::class, 'index'])->name('index');
         Route::get('/create', [AdminTaskController::class, 'create'])->name('create');
         Route::post('/', [AdminTaskController::class, 'store'])->name('store');
@@ -167,7 +167,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // ==================== ADMIN ROUTES ====================
-    Route::middleware(['role:super_admin,direktur'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:admin,direktur'])->prefix('admin')->name('admin.')->group(function () {
         
         Route::get('/dashboard', function () { return view('admin.dashboard'); })->name('dashboard');
         
@@ -203,7 +203,7 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/{customer}', [AdminCustomerController::class, 'destroy'])->name('destroy');
         });
         
-        // ✅ ROUTE KELOLA AKUN PEGAWAI (Super Admin Only)
+        // ✅ ROUTE KELOLA AKUN PEGAWAI (Admin Only)
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');

@@ -47,8 +47,8 @@
         @endforeach
     </div>
 
-    {{-- QUICK ACTIONS (Super Admin Only) --}}
-    @if(Auth::user()?->role?->name === 'super_admin')
+    {{-- QUICK ACTIONS (Admin Only) --}}
+    @if(Auth::user()?->role?->name === 'admin')
     <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Aksi Cepat</h3>
         <div class="flex flex-wrap gap-3">

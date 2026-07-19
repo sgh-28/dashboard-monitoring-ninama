@@ -19,8 +19,8 @@
         </a>
     </div>
 
-    {{-- BANNER: Google Calendar (hanya untuk super_admin) --}}
-    @if(Auth::user()->role->name === 'super_admin')
+    {{-- BANNER: Google Calendar (hanya untuk admin) --}}
+    @if(Auth::user()->role->name === 'admin')
         @if(!$googleTokenExists)
         <div class="mb-6 bg-yellow-900/30 border border-yellow-500/40 rounded-lg p-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">

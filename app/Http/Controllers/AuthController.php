@@ -41,7 +41,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        if (($user->role->name ?? null) === 'super_admin') {
+        if (($user->role->name ?? null) === 'admin') {
             app(GoogleCalendarService::class)->disconnect();
         }
 
@@ -55,8 +55,8 @@ class AuthController extends Controller
     {
         $roleName = $user->role?->name ?? '';
 
-        // Super Admin & Direktur → Dashboard Utama (/)
-        if ($roleName === 'super_admin') {
+        // Admin & Direktur → Dashboard Utama (/)
+        if ($roleName === 'admin') {
             return GoogleCalendarService::isConnected()
                 ? redirect()->intended('/dashboard')
                 : redirect()->route('auth.google');

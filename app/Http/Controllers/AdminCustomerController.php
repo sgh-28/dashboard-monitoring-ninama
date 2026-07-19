@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class AdminCustomerController extends Controller
 {
     /**
-     * Display list of customers (for Super Admin)
+     * Display list of customers (for Admin)
      */
     public function index(Request $request)
     {

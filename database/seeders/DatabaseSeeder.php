@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ================= ROLES =================
-        $roleAdmin      = Role::firstOrCreate(['name' => 'super_admin']);
+        $roleAdmin      = Role::firstOrCreate(['name' => 'admin']);
         $roleDirektur   = Role::firstOrCreate(['name' => 'direktur']);
         $rolePegawai    = Role::firstOrCreate(['name' => 'pegawai']);
         $roleCustomer   = Role::firstOrCreate(['name' => 'customer']);
@@ -27,9 +27,9 @@ class DatabaseSeeder extends Seeder
 
         // ================= USERS =================
         
-        // Super Admin
+        // Admin
         $admin = User::firstOrCreate(['email' => 'admin@ninama.com'], [
-            'name' => 'Super Admin',
+            'name' => 'Admin',
             'password' => Hash::make('password'),
             'role_id' => $roleAdmin->id,
         ]);
@@ -665,7 +665,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('✅ Database seeding completed successfully!');
         $this->command->info('📋 Login Credentials:');
-        $this->command->info('  Super Admin : admin@ninama.com / password');
+        $this->command->info('  Admin : admin@ninama.com / password');
         $this->command->info('  Direktur    : direktur@ninama.com / password');
         $this->command->info('  Pegawai 1   : pegawai1@ninama.com / password');
         $this->command->info('  Pegawai 2   : pegawai2@ninama.com / password');
