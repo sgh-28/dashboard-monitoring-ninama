@@ -48,6 +48,76 @@
             overflow-y: auto;
         }
 
+        html:not(.dark) .app-main {
+            background: #f8fafc;
+        }
+
+        html:not(.dark) .app-main .bg-gray-900,
+        html:not(.dark) .app-main .bg-gray-800 {
+            background-color: #f3f4f6 !important;
+        }
+
+        html:not(.dark) .app-main .bg-gray-700,
+        html:not(.dark) .app-main .bg-gray-700\/30,
+        html:not(.dark) .app-main .bg-gray-700\/40,
+        html:not(.dark) .app-main .bg-gray-700\/50,
+        html:not(.dark) .app-main .bg-gray-700\/60,
+        html:not(.dark) .app-main .bg-gray-800\/40,
+        html:not(.dark) .app-main .bg-gray-800\/50 {
+            background-color: #e5e7eb !important;
+        }
+
+        html:not(.dark) .app-main .border-gray-700,
+        html:not(.dark) .app-main .border-gray-700\/50,
+        html:not(.dark) .app-main .border-gray-600 {
+            border-color: #d1d5db !important;
+        }
+
+        html:not(.dark) .app-main :where(h1, h2, h3, h4, h5, h6, p, span, label, th, td, div).text-white {
+            color: #111827 !important;
+        }
+
+        html:not(.dark) .app-main :where(p, span, label, th, td, div).text-gray-300,
+        html:not(.dark) .app-main :where(p, span, label, th, td, div).text-gray-400 {
+            color: #374151 !important;
+        }
+
+        html:not(.dark) .app-main :where(p, span, label, th, td, div).text-gray-500 {
+            color: #6b7280 !important;
+        }
+
+        html:not(.dark) .app-main input,
+        html:not(.dark) .app-main select,
+        html:not(.dark) .app-main textarea {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #111827 !important;
+        }
+
+        html:not(.dark) .app-main input::placeholder,
+        html:not(.dark) .app-main textarea::placeholder {
+            color: #6b7280 !important;
+        }
+
+        html:not(.dark) .app-main .bg-blue-600,
+        html:not(.dark) .app-main .bg-green-600,
+        html:not(.dark) .app-main .bg-emerald-600,
+        html:not(.dark) .app-main .bg-red-600,
+        html:not(.dark) .app-main .bg-yellow-600,
+        html:not(.dark) .app-main .bg-purple-600,
+        html:not(.dark) .app-main .bg-orange-600,
+        html:not(.dark) .app-main button[type="submit"],
+        html:not(.dark) .app-main a[class*="bg-blue-"],
+        html:not(.dark) .app-main a[class*="bg-green-"],
+        html:not(.dark) .app-main a[class*="bg-emerald-"],
+        html:not(.dark) .app-main a[class*="bg-red-"] {
+            color: #ffffff !important;
+        }
+
+        html:not(.dark) .app-main .shadow-lg {
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        }
+
         @media (max-width: 1023px) {
             #app-sidebar {
                 position: fixed;
