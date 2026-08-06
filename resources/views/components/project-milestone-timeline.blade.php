@@ -47,7 +47,7 @@
     };
 @endphp
 
-<div class="rounded-lg border border-gray-800 bg-[#111111] text-white overflow-hidden">
+<div class="inline-block max-w-full rounded-lg border border-gray-800 bg-[#111111] text-white overflow-hidden">
     <div class="px-5 py-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
             <h3 class="text-base font-semibold text-white">Milestone - {{ $start->translatedFormat('F') }}-{{ $end->translatedFormat('F Y') }}</h3>
@@ -77,8 +77,8 @@
 
     @if($items->isNotEmpty())
         <div class="px-5 pb-5 overflow-x-auto">
-            <div class="min-w-[980px]">
-                <div class="grid grid-cols-[220px_150px_1fr_170px] gap-4 items-end border-b border-gray-800 pb-3 text-xs text-gray-300">
+            <div class="w-[760px] max-w-[760px]">
+                <div class="grid grid-cols-[210px_140px_220px_150px] gap-4 items-end border-b border-gray-800 pb-3 text-xs text-gray-300">
                     <div class="text-gray-400">Milestone</div>
                     <div></div>
                     <div class="relative h-7">
@@ -124,7 +124,7 @@
                             }
                         @endphp
 
-                        <div class="grid grid-cols-[220px_150px_1fr_170px] gap-4 py-5 items-center">
+                        <div class="grid grid-cols-[210px_140px_220px_150px] gap-4 py-5 items-center">
                             <div>
                                 <p class="text-sm font-semibold text-white">{{ $item['title'] }}</p>
                                 <p class="mt-2 text-xs text-gray-400">{{ $item['division'] }} - {{ $item['status_label'] }}</p>
