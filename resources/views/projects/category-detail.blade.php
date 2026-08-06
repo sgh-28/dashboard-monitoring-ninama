@@ -61,7 +61,7 @@
                     </a>
                     
                     @if(in_array($userRole, ['admin', 'direktur']))
-                        <span class="px-2 py-0.5 text-[10px] rounded border bg-emerald-500/20 text-emerald-400 border-emerald-500/30" title="SLA proyek berdasarkan task tepat waktu">
+                        <span class="px-2 py-0.5 text-[10px] rounded border bg-emerald-500/20 text-emerald-400 border-emerald-500/30" title="SLA proyek berdasarkan nilai task yang sudah dapat dinilai">
                             SLA: {{ $p->sla_percentage_formatted }}
                         </span>
                     @endif

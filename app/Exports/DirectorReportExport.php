@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Project;
+use App\Models\ProjectTask;
 use App\Models\MarketingOffer;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
@@ -28,16 +29,21 @@ class ProjectsSheet implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsi
             'Client',
             'Deadline',
             'Progress (%)',
-            'SLA Aktual',
+            'SLA Proyek',
+            'Status SLA',
             'Task Tepat Waktu',
+            'Task Terlambat',
+            'Task Breached',
+            'Task Dinilai',
             'Total Task',
+            'SLA per Divisi',
             'Tanggal Dibuat'
         ];
     }
 
     public function array(): array
     {
-        return Project::with('tasks')
+        return Project::with(['tasks', 'divisions.tasks'])
             ->select('id', 'name', 'category', 'status', 'client_name', 'deadline', 'progress', 'created_at')
             ->orderByDesc('created_at')
             ->get()
@@ -50,8 +56,15 @@ class ProjectsSheet implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsi
                     'deadline' => $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-',
                     'progress' => $item->progress,
                     'sla_actual' => $item->sla_percentage_formatted,
+                    'sla_status' => $item->sla_status_text,
                     'on_time_tasks' => $item->on_time_tasks_count,
+                    'late_tasks' => $item->late_tasks_count,
+                    'breached_tasks' => $item->breached_tasks_count,
+                    'evaluated_tasks' => $item->evaluated_tasks_count,
                     'total_tasks' => $item->total_tasks_count,
+                    'division_sla' => $item->division_sla_summaries
+                        ->map(fn($division) => $division['division_name'] . ': ' . ($division['sla_percentage'] === null ? 'Belum tersedia' : ProjectTask::formatSlaPercentage($division['sla_percentage'])))
+                        ->implode('; '),
                     'created_at' => \Carbon\Carbon::parse($item->created_at)->format('d/m/Y')
                 ];
             })

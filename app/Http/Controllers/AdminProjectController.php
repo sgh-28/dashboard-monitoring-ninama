@@ -23,7 +23,7 @@ class AdminProjectController extends Controller
 
     public function index(Request $request)
     {
-        $query = Project::with(['customer', 'divisions', 'tasks'])->whereIn('status', ['ongoing', 'done']);
+        $query = Project::with(['customer', 'divisions.tasks', 'tasks'])->whereIn('status', ['ongoing', 'done']);
         
         if ($request->filled('customer')) {
             $query->where('customer_id', $request->customer);

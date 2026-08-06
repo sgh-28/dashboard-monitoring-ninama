@@ -28,7 +28,7 @@ class DashboardController extends Controller
         
         // ✅ FILTER & PENCARIAN
         $query = Project::whereIn('status', ['ongoing', 'done'])
-            ->with('tasks')
+            ->with(['tasks', 'divisions.tasks'])
             ->orderByDesc('created_at');
         
         // Filter pencarian

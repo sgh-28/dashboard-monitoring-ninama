@@ -179,7 +179,7 @@
                         </td>
                         <td class="py-3 pr-4">
                             <span class="font-semibold text-emerald-400">{{ $project->sla_percentage_formatted }}</span>
-                            <p class="text-xs text-gray-500">{{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} tepat waktu</p>
+                            <p class="text-xs text-gray-500">{{ $project->sla_status_text }} · {{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }} dinilai</p>
                         </td>
                     </tr>
                     @empty

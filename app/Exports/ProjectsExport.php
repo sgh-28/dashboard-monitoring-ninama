@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Project;
+use App\Models\ProjectTask;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -22,7 +23,7 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
 
     public function collection()
     {
-        $query = Project::with(['customer', 'tasks']);
+        $query = Project::with(['customer', 'tasks', 'divisions.tasks']);
 
         if ($this->category) {
             $query->where('category', $this->category);
@@ -47,9 +48,14 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
             'Tanggal Mulai',
             'Deadline',
             'Target SLA (%)',
-            'SLA Aktual',
+            'SLA Proyek',
+            'Status SLA',
             'Task Tepat Waktu',
             'Total Task',
+            'Task Dinilai',
+            'Task Terlambat',
+            'Task Breached',
+            'SLA per Divisi',
             'Sisa Hari',
             'Dibuat Pada',
         ];
@@ -70,8 +76,15 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
             $project->deadline ? Carbon::parse($project->deadline)->format('d/m/Y') : '-',
             $project->sla ?? '-',
             $project->sla_percentage_formatted,
+            $project->sla_status_text,
             $project->on_time_tasks_count,
             $project->total_tasks_count,
+            $project->evaluated_tasks_count,
+            $project->late_tasks_count,
+            $project->breached_tasks_count,
+            $project->division_sla_summaries
+                ->map(fn($division) => $division['division_name'] . ': ' . ($division['sla_percentage'] === null ? 'Belum tersedia' : ProjectTask::formatSlaPercentage($division['sla_percentage'])))
+                ->implode('; '),
             $daysLeft !== null ? $daysLeft . ' hari' : '-',
             Carbon::parse($project->created_at)->format('d/m/Y H:i'),
         ];

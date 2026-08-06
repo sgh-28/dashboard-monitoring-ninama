@@ -104,7 +104,8 @@
                     </td>
                     <td class="px-4 py-3">
                         <p class="font-semibold text-emerald-400">{{ $project->sla_percentage_formatted }}</p>
-                        <p class="text-xs text-gray-400">{{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} tepat waktu</p>
+                        <p class="text-xs text-gray-400">{{ $project->sla_status_text }}</p>
+                        <p class="text-xs text-gray-500">{{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }} dinilai</p>
                     </td>
                     
                     {{-- ✅ KOLOM TASK: Query langsung tanpa join (FIX ERROR) --}}

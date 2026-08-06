@@ -85,10 +85,10 @@
                             <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $project->sla_percentage_formatted }}</span>
                         </div>
                         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div class="bg-emerald-600 h-2 rounded-full transition-all" style="width: {{ $project->sla_percentage }}%"></div>
+                            <div class="bg-emerald-600 h-2 rounded-full transition-all" style="width: {{ $project->sla_percentage ?? 0 }}%"></div>
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} task selesai tepat waktu
+                            {{ $project->sla_status_text }} · {{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }} task sudah dinilai
                         </p>
                     </div>
 

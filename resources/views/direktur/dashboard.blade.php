@@ -268,7 +268,25 @@
                             </td>
                             <td class="py-3 pr-4">
                                 <span class="font-semibold text-emerald-400">{{ $project->sla_percentage_formatted }}</span>
-                                <p class="text-xs text-gray-500">{{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} tepat waktu</p>
+                                <p class="text-xs text-gray-400">{{ $project->sla_status_text }}</p>
+                                <p class="text-xs text-gray-500">
+                                    Dinilai: {{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }}
+                                    | Tepat waktu: {{ $project->on_time_tasks_count }}
+                                    | Terlambat: {{ $project->late_tasks_count }}
+                                    | Breached: {{ $project->breached_tasks_count }}
+                                </p>
+                                @if($project->division_sla_summaries->isNotEmpty())
+                                    <div class="mt-2 grid grid-cols-1 gap-1 text-[11px] text-gray-400">
+                                        @foreach($project->division_sla_summaries as $divisionSla)
+                                            <div class="flex justify-between gap-3">
+                                                <span>{{ $divisionSla['division_name'] }}</span>
+                                                <span class="text-emerald-300">
+                                                    {{ $divisionSla['sla_percentage'] === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @empty

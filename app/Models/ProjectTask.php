@@ -160,12 +160,172 @@ class ProjectTask extends Model
 
     public function isCompletedOnTime(): bool
     {
-        if ($this->status !== 'done' || !$this->completed_at || !$this->deadline) {
+        $targetDate = $this->slaTargetDate();
+        $completionDate = $this->slaCompletionDate();
+
+        if ($this->status !== 'done' || !$completionDate || !$targetDate) {
             return false;
         }
 
-        return Carbon::parse($this->completed_at)->startOfDay()
-            ->lte(Carbon::parse($this->deadline)->startOfDay());
+        return $completionDate->lte($targetDate);
+    }
+
+    public function slaPlannedStartDate(): ?Carbon
+    {
+        return $this->planned_start_date
+            ? Carbon::parse($this->planned_start_date)->startOfDay()
+            : null;
+    }
+
+    public function slaTargetDate(): ?Carbon
+    {
+        $targetDate = $this->planned_end_date ?: $this->deadline;
+
+        return $targetDate ? Carbon::parse($targetDate)->startOfDay() : null;
+    }
+
+    public function slaCompletionDate(): ?Carbon
+    {
+        $completionDate = $this->actual_end_date ?: $this->completed_at;
+
+        return $completionDate ? Carbon::parse($completionDate)->startOfDay() : null;
+    }
+
+    public function getSlaTargetDaysAttribute(): ?int
+    {
+        $startDate = $this->slaPlannedStartDate();
+        $targetDate = $this->slaTargetDate();
+
+        if (!$startDate || !$targetDate || $targetDate->lt($startDate)) {
+            return null;
+        }
+
+        return max(1, (int) $startDate->diffInDays($targetDate) + 1);
+    }
+
+    public function getSlaEvaluationStatusAttribute(): string
+    {
+        $startDate = $this->slaPlannedStartDate();
+        $targetDate = $this->slaTargetDate();
+
+        if (!$startDate || !$targetDate || $targetDate->lt($startDate)) {
+            return 'not_available';
+        }
+
+        if ($this->status === 'done') {
+            return $this->isCompletedOnTime() ? 'completed_on_time' : 'completed_late';
+        }
+
+        $today = Carbon::now()->startOfDay();
+        if ($today->gt($targetDate)) {
+            return 'breached';
+        }
+
+        if ($this->status === 'pending') {
+            return 'pending';
+        }
+
+        $targetDays = $this->sla_target_days;
+        if ($targetDays) {
+            $elapsedDays = $today->lt($startDate)
+                ? 0
+                : min($targetDays, (int) $startDate->diffInDays($today) + 1);
+
+            if (($elapsedDays / $targetDays) >= 0.8) {
+                return 'warning';
+            }
+        }
+
+        return 'on_track';
+    }
+
+    public function getSlaEvaluationReasonAttribute(): ?string
+    {
+        if (!$this->slaPlannedStartDate()) {
+            return 'Tanggal mulai rencana belum diisi.';
+        }
+
+        if (!$this->slaTargetDate()) {
+            return 'Tanggal target/deadline belum diisi.';
+        }
+
+        if ($this->slaTargetDate()->lt($this->slaPlannedStartDate())) {
+            return 'Tanggal target lebih awal dari tanggal mulai rencana.';
+        }
+
+        if ($this->status === 'pending') {
+            return 'Task belum dimulai.';
+        }
+
+        if (!in_array($this->sla_evaluation_status, ['completed_on_time', 'completed_late', 'breached'], true)) {
+            return 'Task belum selesai dan deadline belum terlewati.';
+        }
+
+        return null;
+    }
+
+    public function getLateDaysAttribute(): ?int
+    {
+        $targetDate = $this->slaTargetDate();
+        $evaluationDate = $this->slaEvaluationDate();
+
+        if (!$targetDate || !$evaluationDate) {
+            return null;
+        }
+
+        return max(0, (int) $targetDate->diffInDays($evaluationDate, false));
+    }
+
+    public function slaEvaluationDate(): ?Carbon
+    {
+        $targetDate = $this->slaTargetDate();
+
+        if (!$targetDate) {
+            return null;
+        }
+
+        if ($this->status === 'done') {
+            return $this->slaCompletionDate();
+        }
+
+        if (Carbon::now()->startOfDay()->gt($targetDate)) {
+            return Carbon::now()->startOfDay();
+        }
+
+        return null;
+    }
+
+    public function getTaskSlaPercentageAttribute(): ?float
+    {
+        $targetDays = $this->sla_target_days;
+        $lateDays = $this->late_days;
+
+        if ($targetDays === null || $lateDays === null) {
+            return null;
+        }
+
+        if ($lateDays === 0) {
+            return 100.0;
+        }
+
+        $percentage = round(($targetDays / ($targetDays + $lateDays)) * 100, 2);
+
+        return min(100.0, max(0.0, $percentage));
+    }
+
+    public function getTaskSlaPercentageFormattedAttribute(): string
+    {
+        return $this->task_sla_percentage === null
+            ? 'Belum tersedia'
+            : self::formatSlaPercentage($this->task_sla_percentage);
+    }
+
+    public static function formatSlaPercentage(float $value): string
+    {
+        $formatted = number_format($value, 2, ',', '.');
+        $formatted = rtrim(rtrim($formatted, '0'), ',');
+
+        return $formatted . '%';
     }
 
     /**

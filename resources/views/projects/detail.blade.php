@@ -58,6 +58,7 @@
                             <th class="px-4 py-3 text-left">Pegawai</th>
                             <th class="px-4 py-3 text-left">Status</th>
                             <th class="px-4 py-3 text-left">Verifikasi PM</th>
+                            <th class="px-4 py-3 text-left">SLA Task</th>
                             <th class="px-4 py-3 text-left">Deadline</th>
                             <th class="px-4 py-3 text-left">Laporan Pengerjaan</th>
                         </tr>
@@ -105,6 +106,13 @@
                                     @endif
                                     @if($task->verifier)
                                         <p class="text-xs text-gray-500">{{ $task->verifier->name }}</p>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    <p class="font-semibold text-emerald-400">{{ $task->task_sla_percentage_formatted }}</p>
+                                    <p class="text-xs text-gray-500">{{ str_replace('_', ' ', $task->sla_evaluation_status) }}</p>
+                                    @if($task->sla_evaluation_reason)
+                                        <p class="text-xs text-amber-400 mt-1">{{ $task->sla_evaluation_reason }}</p>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-gray-300">
@@ -270,13 +278,13 @@
                     <div>
                         <p class="text-3xl font-bold text-emerald-400">{{ $project->sla_percentage_formatted }}</p>
                         <p class="text-xs text-gray-400 mt-1">
-                            {{ $project->on_time_tasks_count }} dari {{ $project->total_tasks_count }} task selesai tepat waktu
+                            {{ $project->sla_status_text }} · {{ $project->evaluated_tasks_count }} dari {{ $project->total_tasks_count }} task sudah dinilai
                         </p>
                     </div>
 
                     <div class="w-full bg-gray-700 rounded-full h-3">
                         <div class="bg-gradient-to-r from-emerald-500 to-green-400 h-3 rounded-full"
-                             style="width: {{ $project->sla_percentage }}%"></div>
+                             style="width: {{ $project->sla_percentage ?? 0 }}%"></div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 text-sm pt-2">
@@ -285,14 +293,38 @@
                             <p class="font-bold text-green-400">{{ $project->on_time_tasks_count }}</p>
                         </div>
                         <div class="rounded border border-gray-700 bg-gray-900/40 p-3">
-                            <p class="text-xs text-gray-400">Terlambat / Belum Selesai</p>
+                            <p class="text-xs text-gray-400">Terlambat</p>
                             <p class="font-bold text-red-400">{{ $project->late_tasks_count }}</p>
                         </div>
+                        <div class="rounded border border-gray-700 bg-gray-900/40 p-3">
+                            <p class="text-xs text-gray-400">Breached</p>
+                            <p class="font-bold text-orange-400">{{ $project->breached_tasks_count }}</p>
+                        </div>
+                        <div class="rounded border border-gray-700 bg-gray-900/40 p-3">
+                            <p class="text-xs text-gray-400">Total Task</p>
+                            <p class="font-bold text-white">{{ $project->total_tasks_count }}</p>
+                        </div>
                     </div>
+
+                    @if($project->division_sla_summaries->isNotEmpty())
+                        <div class="pt-3 border-t border-gray-700">
+                            <p class="text-xs text-gray-400 mb-2">SLA per Divisi</p>
+                            <div class="space-y-1 text-xs">
+                                @foreach($project->division_sla_summaries as $divisionSla)
+                                    <div class="flex justify-between gap-3">
+                                        <span class="text-gray-300">{{ $divisionSla['division_name'] }}</span>
+                                        <span class="text-emerald-300">
+                                            {{ $divisionSla['sla_percentage'] === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 <p class="text-xs text-gray-500 mt-4">
-                    Rumus: task selesai tepat waktu / seluruh task proyek x 100%.
+                    Rumus: total poin SLA task yang sudah dapat dinilai / jumlah task yang sudah dapat dinilai.
                 </p>
             </div>
 
@@ -372,7 +404,7 @@
                     </div>
                     @endif
                     <div class="flex justify-between">
-                        <span class="text-gray-400">SLA Aktual</span>
+                        <span class="text-gray-400">SLA Proyek</span>
                         <span class="text-white">{{ $project->sla_percentage_formatted }}</span>
                     </div>
                 </div>

@@ -124,43 +124,91 @@ class Project extends Model
         return 'on_track';
     }
 
+    public function getSlaSummaryAttribute(): array
+    {
+        $tasks = $this->slaTasks();
+        $evaluatedTasks = $tasks->filter(fn(ProjectTask $task) => $task->task_sla_percentage !== null);
+        $totalSlaPoints = round($evaluatedTasks->sum(fn(ProjectTask $task) => $task->task_sla_percentage), 2);
+        $evaluatedCount = $evaluatedTasks->count();
+
+        return [
+            'total_tasks' => $tasks->count(),
+            'completed_tasks' => $tasks->where('status', 'done')->count(),
+            'evaluated_tasks' => $evaluatedCount,
+            'on_time_tasks' => $tasks->where('sla_evaluation_status', 'completed_on_time')->count(),
+            'late_tasks' => $tasks->where('sla_evaluation_status', 'completed_late')->count(),
+            'on_track_tasks' => $tasks->where('sla_evaluation_status', 'on_track')->count(),
+            'warning_tasks' => $tasks->where('sla_evaluation_status', 'warning')->count(),
+            'breached_tasks' => $tasks->where('sla_evaluation_status', 'breached')->count(),
+            'sla_points' => $totalSlaPoints,
+            'sla_percentage' => $evaluatedCount > 0 ? round($totalSlaPoints / $evaluatedCount, 2) : null,
+            'is_final' => $tasks->count() > 0 && $tasks->every(fn(ProjectTask $task) => $task->status === 'done'),
+        ];
+    }
+
+    public function getDivisionSlaSummariesAttribute(): Collection
+    {
+        if ($this->relationLoaded('divisions')) {
+            $divisions = $this->divisions;
+        } elseif (!$this->exists) {
+            $divisions = collect();
+        } else {
+            $divisions = $this->divisions()->with('tasks')->get();
+        }
+
+        return $divisions->map(fn(ProjectDivision $division) => $division->sla_summary);
+    }
+
     public function getTotalTasksCountAttribute(): int
     {
-        return $this->slaTasks()->count();
+        return $this->sla_summary['total_tasks'];
+    }
+
+    public function getEvaluatedTasksCountAttribute(): int
+    {
+        return $this->sla_summary['evaluated_tasks'];
     }
 
     public function getOnTimeTasksCountAttribute(): int
     {
-        return $this->slaTasks()
-            ->filter(fn(ProjectTask $task) => $task->isCompletedOnTime())
-            ->count();
+        return $this->sla_summary['on_time_tasks'];
     }
 
     public function getLateTasksCountAttribute(): int
     {
-        return max(0, $this->total_tasks_count - $this->on_time_tasks_count);
+        return $this->sla_summary['late_tasks'];
     }
 
-    public function getSlaPercentageAttribute(): float
+    public function getBreachedTasksCountAttribute(): int
     {
-        $totalTasks = $this->total_tasks_count;
+        return $this->sla_summary['breached_tasks'];
+    }
 
-        if ($totalTasks === 0) {
-            return 0.0;
-        }
+    public function getProjectSlaPercentageAttribute(): ?float
+    {
+        return $this->sla_summary['sla_percentage'];
+    }
 
-        $percentage = ($this->on_time_tasks_count / $totalTasks) * 100;
+    public function getSlaPercentageAttribute(): ?float
+    {
+        return $this->project_sla_percentage;
+    }
 
-        return min(100.0, max(0.0, round($percentage, 2)));
+    public function getSlaIsFinalAttribute(): bool
+    {
+        return $this->sla_summary['is_final'];
+    }
+
+    public function getSlaStatusTextAttribute(): string
+    {
+        return $this->sla_is_final ? 'SLA Final' : 'SLA Sementara';
     }
 
     public function getSlaPercentageFormattedAttribute(): string
     {
-        $value = $this->sla_percentage;
-        $formatted = number_format($value, 2, ',', '.');
-        $formatted = rtrim(rtrim($formatted, '0'), ',');
-
-        return $formatted . '%';
+        return $this->project_sla_percentage === null
+            ? 'Belum tersedia'
+            : ProjectTask::formatSlaPercentage($this->project_sla_percentage);
     }
 
     private function slaTasks(): Collection
@@ -173,9 +221,7 @@ class Project extends Model
             return collect();
         }
 
-        return $this->tasks()
-            ->select(['id', 'project_id', 'status', 'deadline', 'completed_at'])
-            ->get();
+        return $this->tasks()->get();
     }
 
     // ==========================================
