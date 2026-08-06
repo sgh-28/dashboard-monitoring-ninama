@@ -182,7 +182,7 @@
                             <h4 class="font-semibold text-gray-800 dark:text-gray-200">{{ $project->name }}</h4>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ $project->client_name ?? '-' }}</p>
                         </div>
-                        <span class="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-sm rounded-full font-semibold">SLA: {{ $project->sla ?? '100' }}%</span>
+                        <span class="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-sm rounded-full font-semibold">SLA: {{ $project->sla_percentage_formatted }}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-4 text-sm mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         <div>

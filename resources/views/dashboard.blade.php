@@ -136,12 +136,13 @@
                         <th class="pb-3 font-medium">Bidang</th>
                         <th class="pb-3 font-medium">Status</th>
                         <th class="pb-3 font-medium">Deadline</th>
+                        <th class="pb-3 font-medium">SLA</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-700">
                     @php
                         $recentProjects = \App\Models\Project::whereIn('status', ['ongoing', 'done'])
-                            ->with('customer')
+                            ->with(['customer', 'tasks'])
                             ->orderByDesc('created_at')
                             ->limit(5)
                             ->get();
@@ -176,10 +177,14 @@
                                 <span class="text-gray-500">-</span>
                             @endif
                         </td>
+                        <td class="py-3 pr-4">
+                            <span class="font-semibold text-emerald-400">{{ $project->sla_percentage_formatted }}</span>
+                            <p class="text-xs text-gray-500">{{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} tepat waktu</p>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="py-6 text-center text-gray-500">
+                        <td colspan="6" class="py-6 text-center text-gray-500">
                             Belum ada data proyek.
                         </td>
                     </tr>

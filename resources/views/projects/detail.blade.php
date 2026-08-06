@@ -262,37 +262,38 @@
         {{-- KOLOM KANAN: SLA & INFO --}}
         <div class="space-y-6">
             
-            {{-- SLA STATUS --}}
+            {{-- SLA PROYEK --}}
             <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <h3 class="text-lg font-semibold text-white mb-4">⏱️ SLA Status</h3>
-                
-                @if($project->phases->count() > 0)
-                <div class="space-y-3 mb-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-400 text-sm">On Track</span>
-                        <span class="text-green-400 font-bold">{{ $slaSummary['on_track'] }}</span>
+                <h3 class="text-lg font-semibold text-white mb-4">SLA Proyek</h3>
+
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-3xl font-bold text-emerald-400">{{ $project->sla_percentage_formatted }}</p>
+                        <p class="text-xs text-gray-400 mt-1">
+                            {{ $project->on_time_tasks_count }} dari {{ $project->total_tasks_count }} task selesai tepat waktu
+                        </p>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-400 text-sm">Warning</span>
-                        <span class="text-yellow-400 font-bold">{{ $slaSummary['warning'] }}</span>
+
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div class="bg-gradient-to-r from-emerald-500 to-green-400 h-3 rounded-full"
+                             style="width: {{ $project->sla_percentage }}%"></div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-400 text-sm">Breached</span>
-                        <span class="text-red-400 font-bold">{{ $slaSummary['breached'] }}</span>
+
+                    <div class="grid grid-cols-2 gap-3 text-sm pt-2">
+                        <div class="rounded border border-gray-700 bg-gray-900/40 p-3">
+                            <p class="text-xs text-gray-400">Tepat Waktu</p>
+                            <p class="font-bold text-green-400">{{ $project->on_time_tasks_count }}</p>
+                        </div>
+                        <div class="rounded border border-gray-700 bg-gray-900/40 p-3">
+                            <p class="text-xs text-gray-400">Terlambat / Belum Selesai</p>
+                            <p class="font-bold text-red-400">{{ $project->late_tasks_count }}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="p-3 rounded-lg border
-                    @if($slaStatus === 'on_track') bg-green-500/10 border-green-500/30 text-green-400
-                    @elseif($slaStatus === 'warning') bg-yellow-500/10 border-yellow-500/30 text-yellow-400
-                    @else bg-red-500/10 border-red-500/30 text-red-400 @endif">
-                    <p class="text-sm font-semibold">Overall SLA: {{ ucfirst($slaStatus) }}</p>
-                </div>
-                @else
-                <p class="text-gray-400 text-sm">
-                    Data SLA belum tersedia.
+                <p class="text-xs text-gray-500 mt-4">
+                    Rumus: task selesai tepat waktu / seluruh task proyek x 100%.
                 </p>
-                @endif
             </div>
 
             {{-- PROGRESS TIMELINE LIST --}}
@@ -370,6 +371,10 @@
                         <span class="text-white">{{ $project->sla }}%</span>
                     </div>
                     @endif
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">SLA Aktual</span>
+                        <span class="text-white">{{ $project->sla_percentage_formatted }}</span>
+                    </div>
                 </div>
             </div>
         </div>

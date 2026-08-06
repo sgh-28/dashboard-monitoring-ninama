@@ -84,6 +84,20 @@
                             </div>
                         </div>
 
+                        {{-- SLA Proyek --}}
+                        <div class="mt-4 pt-4 border-t border-gray-600">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">SLA Proyek</span>
+                                <span class="text-emerald-400 font-semibold">{{ $project->sla_percentage_formatted }}</span>
+                            </div>
+                            <div class="w-full bg-gray-600 rounded-full h-2">
+                                <div class="bg-emerald-500 h-2 rounded-full transition-all" style="width: {{ $project->sla_percentage }}%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} task selesai tepat waktu
+                            </p>
+                        </div>
+
                         {{-- Progress Per Divisi --}}
                         @if($project->divisions && $project->divisions->count() > 0)
                         <div class="mt-4 pt-4 border-t border-gray-600">

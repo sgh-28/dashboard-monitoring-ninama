@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Project extends Model
 {
@@ -121,6 +122,60 @@ class Project extends Model
         if ($breached > 0) return 'breached';
         if ($warning > 0) return 'warning';
         return 'on_track';
+    }
+
+    public function getTotalTasksCountAttribute(): int
+    {
+        return $this->slaTasks()->count();
+    }
+
+    public function getOnTimeTasksCountAttribute(): int
+    {
+        return $this->slaTasks()
+            ->filter(fn(ProjectTask $task) => $task->isCompletedOnTime())
+            ->count();
+    }
+
+    public function getLateTasksCountAttribute(): int
+    {
+        return max(0, $this->total_tasks_count - $this->on_time_tasks_count);
+    }
+
+    public function getSlaPercentageAttribute(): float
+    {
+        $totalTasks = $this->total_tasks_count;
+
+        if ($totalTasks === 0) {
+            return 0.0;
+        }
+
+        $percentage = ($this->on_time_tasks_count / $totalTasks) * 100;
+
+        return min(100.0, max(0.0, round($percentage, 2)));
+    }
+
+    public function getSlaPercentageFormattedAttribute(): string
+    {
+        $value = $this->sla_percentage;
+        $formatted = number_format($value, 2, ',', '.');
+        $formatted = rtrim(rtrim($formatted, '0'), ',');
+
+        return $formatted . '%';
+    }
+
+    private function slaTasks(): Collection
+    {
+        if ($this->relationLoaded('tasks')) {
+            return $this->tasks;
+        }
+
+        if (!$this->exists) {
+            return collect();
+        }
+
+        return $this->tasks()
+            ->select(['id', 'project_id', 'status', 'deadline', 'completed_at'])
+            ->get();
     }
 
     // ==========================================

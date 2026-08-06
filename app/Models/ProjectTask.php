@@ -158,6 +158,16 @@ class ProjectTask extends Model
             && $this->actual_end_date->gt($this->planned_end_date);
     }
 
+    public function isCompletedOnTime(): bool
+    {
+        if ($this->status !== 'done' || !$this->completed_at || !$this->deadline) {
+            return false;
+        }
+
+        return Carbon::parse($this->completed_at)->startOfDay()
+            ->lte(Carbon::parse($this->deadline)->startOfDay());
+    }
+
     /**
      * Get the number of days until deadline (negative if overdue).
      */

@@ -22,7 +22,7 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
 
     public function collection()
     {
-        $query = Project::with(['customer', 'phases']);
+        $query = Project::with(['customer', 'tasks']);
 
         if ($this->category) {
             $query->where('category', $this->category);
@@ -47,6 +47,9 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
             'Tanggal Mulai',
             'Deadline',
             'Target SLA (%)',
+            'SLA Aktual',
+            'Task Tepat Waktu',
+            'Total Task',
             'Sisa Hari',
             'Dibuat Pada',
         ];
@@ -66,6 +69,9 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
             $project->start_date ? Carbon::parse($project->start_date)->format('d/m/Y') : '-',
             $project->deadline ? Carbon::parse($project->deadline)->format('d/m/Y') : '-',
             $project->sla ?? '-',
+            $project->sla_percentage_formatted,
+            $project->on_time_tasks_count,
+            $project->total_tasks_count,
             $daysLeft !== null ? $daysLeft . ' hari' : '-',
             Carbon::parse($project->created_at)->format('d/m/Y H:i'),
         ];

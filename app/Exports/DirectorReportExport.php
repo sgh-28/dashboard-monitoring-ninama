@@ -28,13 +28,17 @@ class ProjectsSheet implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsi
             'Client',
             'Deadline',
             'Progress (%)',
+            'SLA Aktual',
+            'Task Tepat Waktu',
+            'Total Task',
             'Tanggal Dibuat'
         ];
     }
 
     public function array(): array
     {
-        return Project::select('name', 'category', 'status', 'client_name', 'deadline', 'progress', 'created_at')
+        return Project::with('tasks')
+            ->select('id', 'name', 'category', 'status', 'client_name', 'deadline', 'progress', 'created_at')
             ->orderByDesc('created_at')
             ->get()
             ->map(function ($item) {
@@ -45,6 +49,9 @@ class ProjectsSheet implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsi
                     'client_name' => $item->client_name,
                     'deadline' => $item->deadline ? \Carbon\Carbon::parse($item->deadline)->format('d/m/Y') : '-',
                     'progress' => $item->progress,
+                    'sla_actual' => $item->sla_percentage_formatted,
+                    'on_time_tasks' => $item->on_time_tasks_count,
+                    'total_tasks' => $item->total_tasks_count,
                     'created_at' => \Carbon\Carbon::parse($item->created_at)->format('d/m/Y')
                 ];
             })

@@ -56,6 +56,7 @@
                     <th class="px-4 py-3 text-left text-xs text-gray-300 uppercase">Status</th>
                     <th class="px-4 py-3 text-left text-xs text-gray-300 uppercase">Deadline</th>
                     <th class="px-4 py-3 text-left text-xs text-gray-300 uppercase">Progress</th>
+                    <th class="px-4 py-3 text-left text-xs text-gray-300 uppercase">SLA</th>
                     <th class="px-4 py-3 text-left text-xs text-gray-300 uppercase">Task</th>
                     
                     {{-- ✅ KOLOM AKSI: HANYA MUNCUL JIKA BUKAN DIREKTUR --}}
@@ -101,14 +102,16 @@
                         </div>
                         <p class="text-xs text-gray-400 mt-1">{{ $project->progress ?? 0 }}%</p>
                     </td>
+                    <td class="px-4 py-3">
+                        <p class="font-semibold text-emerald-400">{{ $project->sla_percentage_formatted }}</p>
+                        <p class="text-xs text-gray-400">{{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} tepat waktu</p>
+                    </td>
                     
                     {{-- ✅ KOLOM TASK: Query langsung tanpa join (FIX ERROR) --}}
                     <td class="px-4 py-3">
                         @php
-                            $taskCount = \App\Models\ProjectTask::where('project_id', $project->id)->count();
-                            $completedTasks = \App\Models\ProjectTask::where('project_id', $project->id)
-                                ->where('status', 'done')
-                                ->count();
+                            $taskCount = $project->tasks->count();
+                            $completedTasks = $project->tasks->where('status', 'done')->count();
                         @endphp
                         @if($taskCount > 0)
                             <div class="text-center">
@@ -153,7 +156,7 @@
                 @empty
                 <tr>
                     {{-- ✅ Colspan menyesuaikan apakah kolom aksi ada atau tidak --}}
-                    <td colspan="{{ Auth::user()->role->name !== 'direktur' ? 8 : 7 }}" class="px-4 py-8 text-center text-gray-400">
+                    <td colspan="{{ Auth::user()->role->name !== 'direktur' ? 9 : 8 }}" class="px-4 py-8 text-center text-gray-400">
                         Belum ada data proyek. 
                         @if(Auth::user()->role->name !== 'direktur')
                             <a href="{{ route('admin.projects.create') }}" class="text-blue-400 hover:underline">Tambahkan proyek pertama</a>

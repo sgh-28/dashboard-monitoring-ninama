@@ -17,8 +17,8 @@ class ProjectController extends Controller
             'completed' => Project::where('category', 'web')->where('status', 'done')->count(),
         ];
 
-        $ongoingProjects = Project::where('category', 'web')->where('status', 'ongoing')->with(['divisions.tasks'])->orderBy('created_at', 'desc')->get();
-        $completedProjects = Project::where('category', 'web')->where('status', 'done')->orderBy('created_at', 'desc')->get();
+        $ongoingProjects = Project::where('category', 'web')->where('status', 'ongoing')->with(['divisions.tasks', 'tasks'])->orderBy('created_at', 'desc')->get();
+        $completedProjects = Project::where('category', 'web')->where('status', 'done')->with('tasks')->orderBy('created_at', 'desc')->get();
         $offerProjects = collect();
         $progressOfferProjects = collect();
         $rejectedProjects = collect();
@@ -33,8 +33,8 @@ class ProjectController extends Controller
             'completed' => Project::where('category', 'internet')->where('status', 'done')->count(),
         ];
 
-        $ongoingProjects = Project::where('category', 'internet')->where('status', 'ongoing')->with(['divisions.tasks'])->orderBy('created_at', 'desc')->get();
-        $completedProjects = Project::where('category', 'internet')->where('status', 'done')->orderBy('created_at', 'desc')->get();
+        $ongoingProjects = Project::where('category', 'internet')->where('status', 'ongoing')->with(['divisions.tasks', 'tasks'])->orderBy('created_at', 'desc')->get();
+        $completedProjects = Project::where('category', 'internet')->where('status', 'done')->with('tasks')->orderBy('created_at', 'desc')->get();
         $offerProjects = collect();
         $progressOfferProjects = collect();
         $rejectedProjects = collect();
@@ -49,8 +49,8 @@ class ProjectController extends Controller
             'completed' => Project::where('category', 'cctv')->where('status', 'done')->count(),
         ];
 
-        $ongoingProjects = Project::where('category', 'cctv')->where('status', 'ongoing')->with(['divisions.tasks'])->orderBy('created_at', 'desc')->get();
-        $completedProjects = Project::where('category', 'cctv')->where('status', 'done')->orderBy('created_at', 'desc')->get();
+        $ongoingProjects = Project::where('category', 'cctv')->where('status', 'ongoing')->with(['divisions.tasks', 'tasks'])->orderBy('created_at', 'desc')->get();
+        $completedProjects = Project::where('category', 'cctv')->where('status', 'done')->with('tasks')->orderBy('created_at', 'desc')->get();
         $offerProjects = collect();
         $progressOfferProjects = collect();
         $rejectedProjects = collect();
@@ -68,7 +68,7 @@ class ProjectController extends Controller
             'done' => Project::where('category', $category)->where('status', 'done')->count(),
         ];
 
-        $projects = Project::where('category', $category)->whereIn('status', ['ongoing', 'done'])->with('customer')->orderByDesc('created_at')->get();
+        $projects = Project::where('category', $category)->whereIn('status', ['ongoing', 'done'])->with(['customer', 'tasks'])->orderByDesc('created_at')->get();
         $labels = ['web' => 'Web & Aplikasi', 'internet' => 'Layanan Internet', 'cctv' => 'CCTV'];
 
         return view('projects.category-detail', compact('category', 'stats', 'projects', 'labels'));
@@ -81,7 +81,7 @@ class ProjectController extends Controller
     {
         $project->load(['phases' => function($q) {
             $q->orderBy('phase_order');
-        }, 'customer', 'tasks.division', 'tasks.assignee']);
+        }, 'customer', 'tasks.division', 'tasks.assignee', 'tasks.verifier']);
 
         $overallProgress = $project->overall_progress;
         $slaStatus = $project->project_sla_status;

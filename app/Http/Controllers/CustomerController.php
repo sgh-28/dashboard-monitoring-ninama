@@ -20,7 +20,7 @@ class CustomerController extends Controller
 
         try {
             $projects = $user->customerProjects()
-                ->with(['divisions.tasks'])
+                ->with(['divisions.tasks', 'tasks'])
                 ->whereNotIn('status', ['rejected'])
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -71,7 +71,7 @@ class CustomerController extends Controller
             $projects = $user->customerProjects()
                 ->where('category', $category)
                 ->whereNotIn('status', ['rejected'])
-                ->with(['divisions.tasks'])
+                ->with(['divisions.tasks', 'tasks'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         } catch (\Exception $e) {
@@ -117,7 +117,7 @@ class CustomerController extends Controller
             abort(404, 'Project tidak ditemukan');
         }
 
-        $project->load(['divisions.tasks']);
+        $project->load(['divisions.tasks', 'tasks']);
         
         return view('customer.project-detail', compact('project'));
     }

@@ -79,6 +79,19 @@
                         </div>
                     </div>
 
+                    <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">SLA Proyek</span>
+                            <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $project->sla_percentage_formatted }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-emerald-600 h-2 rounded-full transition-all" style="width: {{ $project->sla_percentage }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {{ $project->on_time_tasks_count }}/{{ $project->total_tasks_count }} task selesai tepat waktu
+                        </p>
+                    </div>
+
                     @if($project->divisions && $project->divisions->flatMap->tasks->count() > 0)
                     <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                         <p class="text-gray-500 dark:text-gray-400 text-xs uppercase mb-3">Tasklist Proyek</p>

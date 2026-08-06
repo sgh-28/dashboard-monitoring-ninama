@@ -61,24 +61,8 @@
                     </a>
                     
                     @if(in_array($userRole, ['admin', 'direktur']))
-                        @php
-                            $slaStatus = 'on_track';
-                            if($p->deadline) {
-                                $daysLeft = now()->diffInDays($p->deadline, false);
-                                if($daysLeft < 0 && $p->status !== 'done') {
-                                    $slaStatus = 'breached';
-                                } elseif($daysLeft <= 3 && $p->status !== 'done') {
-                                    $slaStatus = 'warning';
-                                }
-                            }
-                            $slaColors = [
-                                'on_track' => 'bg-green-500/20 text-green-400 border-green-500/30',
-                                'warning' => 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-                                'breached' => 'bg-red-500/20 text-red-400 border-red-500/30',
-                            ];
-                        @endphp
-                        <span class="px-2 py-0.5 text-[10px] rounded border {{ $slaColors[$slaStatus] }}" title="SLA Status">
-                            SLA: {{ ucfirst($slaStatus) }}
+                        <span class="px-2 py-0.5 text-[10px] rounded border bg-emerald-500/20 text-emerald-400 border-emerald-500/30" title="SLA proyek berdasarkan task tepat waktu">
+                            SLA: {{ $p->sla_percentage_formatted }}
                         </span>
                     @endif
                 </div>
