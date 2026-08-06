@@ -156,7 +156,11 @@ class Project extends Model
             $divisions = $this->divisions()->with('tasks')->get();
         }
 
-        return $divisions->map(fn(ProjectDivision $division) => $division->sla_summary);
+        return $divisions
+            ->filter(fn($division) => $division instanceof ProjectDivision)
+            ->map(fn(ProjectDivision $division) => $division->sla_summary)
+            ->filter(fn($summary) => is_array($summary))
+            ->values();
     }
 
     public function getTotalTasksCountAttribute(): int

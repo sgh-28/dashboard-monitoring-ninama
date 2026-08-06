@@ -310,11 +310,11 @@
                         <div class="pt-3 border-t border-gray-700">
                             <p class="text-xs text-gray-400 mb-2">SLA per Divisi</p>
                             <div class="space-y-1 text-xs">
-                                @foreach($project->division_sla_summaries as $divisionSla)
+                                @foreach($project->division_sla_summaries->filter(fn($divisionSla) => is_array($divisionSla)) as $divisionSla)
                                     <div class="flex justify-between gap-3">
-                                        <span class="text-gray-300">{{ $divisionSla['division_name'] }}</span>
+                                        <span class="text-gray-300">{{ $divisionSla['division_name'] ?? '-' }}</span>
                                         <span class="text-emerald-300">
-                                            {{ $divisionSla['sla_percentage'] === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
+                                            {{ ($divisionSla['sla_percentage'] ?? null) === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
                                         </span>
                                     </div>
                                 @endforeach

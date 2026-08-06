@@ -277,11 +277,11 @@
                                 </p>
                                 @if($project->division_sla_summaries->isNotEmpty())
                                     <div class="mt-2 grid grid-cols-1 gap-1 text-[11px] text-gray-400">
-                                        @foreach($project->division_sla_summaries as $divisionSla)
+                                        @foreach($project->division_sla_summaries->filter(fn($divisionSla) => is_array($divisionSla)) as $divisionSla)
                                             <div class="flex justify-between gap-3">
-                                                <span>{{ $divisionSla['division_name'] }}</span>
+                                                <span>{{ $divisionSla['division_name'] ?? '-' }}</span>
                                                 <span class="text-emerald-300">
-                                                    {{ $divisionSla['sla_percentage'] === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
+                                                    {{ ($divisionSla['sla_percentage'] ?? null) === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
                                                 </span>
                                             </div>
                                         @endforeach

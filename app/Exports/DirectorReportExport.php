@@ -63,7 +63,8 @@ class ProjectsSheet implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsi
                     'evaluated_tasks' => $item->evaluated_tasks_count,
                     'total_tasks' => $item->total_tasks_count,
                     'division_sla' => $item->division_sla_summaries
-                        ->map(fn($division) => $division['division_name'] . ': ' . ($division['sla_percentage'] === null ? 'Belum tersedia' : ProjectTask::formatSlaPercentage($division['sla_percentage'])))
+                        ->filter(fn($division) => is_array($division))
+                        ->map(fn($division) => ($division['division_name'] ?? '-') . ': ' . (($division['sla_percentage'] ?? null) === null ? 'Belum tersedia' : ProjectTask::formatSlaPercentage($division['sla_percentage'])))
                         ->implode('; '),
                     'created_at' => \Carbon\Carbon::parse($item->created_at)->format('d/m/Y')
                 ];

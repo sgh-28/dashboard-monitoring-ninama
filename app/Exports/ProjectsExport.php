@@ -83,7 +83,8 @@ class ProjectsExport implements FromCollection, WithHeadings, WithMapping, WithT
             $project->late_tasks_count,
             $project->breached_tasks_count,
             $project->division_sla_summaries
-                ->map(fn($division) => $division['division_name'] . ': ' . ($division['sla_percentage'] === null ? 'Belum tersedia' : ProjectTask::formatSlaPercentage($division['sla_percentage'])))
+                ->filter(fn($division) => is_array($division))
+                ->map(fn($division) => ($division['division_name'] ?? '-') . ': ' . (($division['sla_percentage'] ?? null) === null ? 'Belum tersedia' : ProjectTask::formatSlaPercentage($division['sla_percentage'])))
                 ->implode('; '),
             $daysLeft !== null ? $daysLeft . ' hari' : '-',
             Carbon::parse($project->created_at)->format('d/m/Y H:i'),
