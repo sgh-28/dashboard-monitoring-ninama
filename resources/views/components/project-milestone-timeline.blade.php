@@ -212,7 +212,7 @@
                                 $diffColor = '#f05d67';
                             }
 
-                            $laneHeight = $hasLateLane ? 'h-[94px]' : 'h-[64px]';
+                            $laneHeight = $hasLateLane ? '94px' : '64px';
                         @endphp
 
                         <div class="grid gap-6 rounded-lg border px-5 py-5" style="grid-template-columns:230px 170px minmax(560px,1fr) 210px;background:#172235;border-color:#334155;">
@@ -231,7 +231,7 @@
                                 @endif
                             </div>
 
-                            <div class="relative {{ $laneHeight }} min-w-0 overflow-hidden">
+                            <div class="relative min-w-0 overflow-hidden" style="height:{{ $laneHeight }};">
                                 @foreach($markers as $marker)
                                     <div
                                         class="absolute top-0 bottom-0 w-px"
@@ -239,32 +239,32 @@
                                     ></div>
                                 @endforeach
 
-                                <div class="absolute left-0 right-0 top-1 h-4 rounded-full" style="background:#263348;"></div>
+                                <div class="absolute left-0 right-0 rounded-full" style="top:4px;height:16px;background:#263348;"></div>
                                 <div
-                                    class="absolute top-1 h-4 rounded-full shadow-sm"
-                                    style="left:{{ $plannedBar['left'] }}%;width:{{ $plannedBar['width'] }}%;background:#4f8cff;"
+                                    class="absolute rounded-full shadow-sm"
+                                    style="top:4px;height:16px;left:{{ $plannedBar['left'] }}%;width:{{ $plannedBar['width'] }}%;background:#4f8cff;"
                                 ></div>
-                                <div class="absolute top-[2px] h-5 w-2 rounded-full border" style="left:calc({{ $plannedBar['left'] }}% - 4px);border-color:#4f8cff;background:#172235;"></div>
-                                <div class="absolute top-[2px] h-5 w-2 rounded-full border" style="left:calc({{ $plannedBar['left'] + $plannedBar['width'] }}% - 4px);border-color:#4f8cff;background:#172235;"></div>
+                                <div class="absolute rounded-full border" style="top:2px;height:20px;width:8px;left:calc({{ $plannedBar['left'] }}% - 4px);border-color:#4f8cff;background:#172235;"></div>
+                                <div class="absolute rounded-full border" style="top:2px;height:20px;width:8px;left:calc({{ $plannedBar['left'] + $plannedBar['width'] }}% - 4px);border-color:#4f8cff;background:#172235;"></div>
 
-                                <div class="absolute left-0 right-0 top-[33px] h-4 rounded-full" style="background:#263348;"></div>
+                                <div class="absolute left-0 right-0 rounded-full" style="top:36px;height:16px;background:#263348;"></div>
                                 @if($actualBar)
                                     <div
-                                        class="absolute top-[33px] h-4 rounded-full shadow-sm"
-                                        style="left:{{ $actualBar['left'] }}%;width:{{ $actualBar['width'] }}%;background:#22c77a;"
+                                        class="absolute rounded-full shadow-sm"
+                                        style="top:36px;height:16px;left:{{ $actualBar['left'] }}%;width:{{ $actualBar['width'] }}%;background:#22c77a;"
                                     ></div>
-                                    <div class="absolute top-[34px] h-5 w-2 rounded-full border" style="left:calc({{ $actualBar['left'] }}% - 4px);border-color:#22c77a;background:#172235;"></div>
-                                    <div class="absolute top-[34px] h-5 w-2 rounded-full border" style="left:calc({{ $actualBar['left'] + $actualBar['width'] }}% - 4px);border-color:#22c77a;background:#172235;"></div>
+                                    <div class="absolute rounded-full border" style="top:34px;height:20px;width:8px;left:calc({{ $actualBar['left'] }}% - 4px);border-color:#22c77a;background:#172235;"></div>
+                                    <div class="absolute rounded-full border" style="top:34px;height:20px;width:8px;left:calc({{ $actualBar['left'] + $actualBar['width'] }}% - 4px);border-color:#22c77a;background:#172235;"></div>
                                 @endif
 
                                 @if($hasLateLane && $lateBar)
-                                    <div class="absolute left-0 right-0 top-[65px] h-4 rounded-full" style="background:#263348;"></div>
+                                    <div class="absolute left-0 right-0 rounded-full" style="top:68px;height:16px;background:#263348;"></div>
                                     <div
-                                        class="absolute top-[65px] h-4 rounded-full shadow-sm"
-                                        style="left:{{ $lateBar['left'] }}%;width:{{ $lateBar['width'] }}%;background:#f05d67;"
+                                        class="absolute rounded-full shadow-sm"
+                                        style="top:68px;height:16px;left:{{ $lateBar['left'] }}%;width:{{ $lateBar['width'] }}%;background:#f05d67;"
                                     ></div>
-                                    <div class="absolute top-[66px] h-5 w-2 rounded-full border" style="left:calc({{ $lateBar['left'] }}% - 4px);border-color:#f05d67;background:#172235;"></div>
-                                    <div class="absolute top-[66px] h-5 w-2 rounded-full border" style="left:calc({{ $lateBar['left'] + $lateBar['width'] }}% - 4px);border-color:#f05d67;background:#172235;"></div>
+                                    <div class="absolute rounded-full border" style="top:66px;height:20px;width:8px;left:calc({{ $lateBar['left'] }}% - 4px);border-color:#f05d67;background:#172235;"></div>
+                                    <div class="absolute rounded-full border" style="top:66px;height:20px;width:8px;left:calc({{ $lateBar['left'] + $lateBar['width'] }}% - 4px);border-color:#f05d67;background:#172235;"></div>
                                 @endif
                             </div>
 
