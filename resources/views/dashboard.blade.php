@@ -186,16 +186,10 @@
                             @endif
                         </td>
                         <td class="py-4 align-middle">
-                            <div class="rounded-lg border border-gray-700/80 bg-gray-900/35 px-3 py-2">
-                                <div class="flex items-center justify-between gap-3">
-                                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">SLA</span>
-                                    <span class="text-base font-bold text-emerald-400">{{ $project->sla_percentage_formatted }}</span>
-                                </div>
-                                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-400">
-                                    <span>{{ $project->sla_status_text }}</span>
-                                    <span class="text-gray-600">|</span>
-                                    <span>{{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }} dinilai</span>
-                                </div>
+                            <div class="min-w-[110px] leading-relaxed">
+                                <p class="font-semibold text-emerald-400">{{ $project->sla_percentage_formatted }}</p>
+                                <p class="text-xs text-gray-400">{{ $project->sla_status_text }}</p>
+                                <p class="text-xs text-gray-500">{{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }} dinilai</p>
                             </div>
                         </td>
                     </tr>
