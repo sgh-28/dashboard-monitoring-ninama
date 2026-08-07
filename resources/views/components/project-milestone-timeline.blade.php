@@ -38,8 +38,18 @@
         $cursor->addDays($markerStep);
     }
 
-    if (empty($markers) || end($markers)['left'] < 100) {
+    if (empty($markers)) {
         $markers[] = [
+            'label' => $end->translatedFormat('j M'),
+            'left' => 100,
+        ];
+    } elseif (end($markers)['left'] < 94) {
+        $markers[] = [
+            'label' => $end->translatedFormat('j M'),
+            'left' => 100,
+        ];
+    } elseif (end($markers)['left'] < 100) {
+        $markers[array_key_last($markers)] = [
             'label' => $end->translatedFormat('j M'),
             'left' => 100,
         ];
@@ -136,8 +146,8 @@
 
     @if($items->isNotEmpty())
         <div class="overflow-x-auto px-6 py-6">
-            <div class="min-w-[1120px]">
-                <div class="grid grid-cols-[230px_155px_1fr_190px] gap-5">
+            <div class="min-w-[1240px]">
+                <div class="grid gap-6" style="grid-template-columns:230px 170px minmax(560px,1fr) 210px;">
                     <div class="text-[14px]" style="color:#9fb0c7;">Milestone - {{ $timelinePeriod }}</div>
                     <div></div>
                     <div class="relative h-10">
@@ -205,7 +215,7 @@
                             $laneHeight = $hasLateLane ? 'h-[94px]' : 'h-[64px]';
                         @endphp
 
-                        <div class="grid grid-cols-[230px_155px_1fr_190px] gap-5 rounded-lg border px-5 py-5" style="background:#172235;border-color:#334155;">
+                        <div class="grid gap-6 rounded-lg border px-5 py-5" style="grid-template-columns:230px 170px minmax(560px,1fr) 210px;background:#172235;border-color:#334155;">
                             <div>
                                 <p class="text-[18px] font-semibold leading-snug" style="color:#e8eef8;">{{ $item['title'] }}</p>
                                 <p class="mt-2 text-[14px] leading-relaxed" style="color:#9fb0c7;">
@@ -221,7 +231,7 @@
                                 @endif
                             </div>
 
-                            <div class="relative {{ $laneHeight }}">
+                            <div class="relative {{ $laneHeight }} min-w-0 overflow-hidden">
                                 @foreach($markers as $marker)
                                     <div
                                         class="absolute top-0 bottom-0 w-px"
