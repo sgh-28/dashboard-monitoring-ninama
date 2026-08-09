@@ -10,13 +10,15 @@
             <h1 class="text-2xl font-bold text-white">Dashboard Utama</h1>
             <p class="text-gray-400 text-sm">Selamat datang, {{ Auth::user()->name }}</p>
         </div>
-        <a href="{{ route('admin.projects.create') }}" 
-           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Tambah Proyek
-        </a>
+        @if(Auth::user()->role->name === 'admin')
+            <a href="{{ route('admin.projects.create') }}" 
+               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Tambah Proyek
+            </a>
+        @endif
     </div>
 
     {{-- BANNER: Google Calendar (hanya untuk admin) --}}
@@ -46,6 +48,10 @@
             </svg>
             <p class="text-green-400 text-sm font-medium">✅ Google Calendar terhubung — event otomatis aktif saat task dibuat</p>
             <a href="{{ route('auth.google') }}" class="ml-auto text-xs text-green-500 hover:text-green-300 underline">Reconnect</a>
+            <form method="POST" action="{{ route('auth.google.disconnect') }}">
+                @csrf
+                <button type="submit" class="text-xs text-red-300 hover:text-red-200 underline">Putuskan</button>
+            </form>
         </div>
         @endif
     @endif

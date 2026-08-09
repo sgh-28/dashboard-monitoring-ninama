@@ -14,8 +14,14 @@
         <input type="hidden" name="project_id" value="{{ $project->id }}">
 
         {{-- INFO PROYEK --}}
+        @php
+            $projectStartDate = $project->start_date?->format('Y-m-d');
+            $projectDeadlineDate = $project->deadline?->format('Y-m-d');
+        @endphp
+
         <div class="bg-blue-900/30 border border-blue-500/30 p-4 rounded-lg mb-6">
             <h3 class="text-lg font-semibold text-white mb-2">{{ $project->name }}</h3>
+            <p class="text-sm text-gray-300">Tanggal Mulai Proyek: {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('d/m/Y') : '-' }}</p>
             <p class="text-sm text-gray-300">Kategori: {{ ucfirst($project->category) }}</p>
             <p class="text-sm text-gray-300">Deadline Proyek: {{ $project->deadline ? \Carbon\Carbon::parse($project->deadline)->format('d/m/Y') : '-' }}</p>
         </div>
@@ -58,7 +64,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">Deadline *</label>
-                                <input type="date" name="tasks[0][deadline]" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                                <input type="date" name="tasks[0][deadline]" required min="{{ $projectStartDate }}" max="{{ $projectDeadlineDate }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -68,11 +74,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">Tanggal Mulai</label>
-                                <input type="date" name="tasks[0][planned_start_date]" value="{{ date('Y-m-d') }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                                <input type="date" name="tasks[0][planned_start_date]" value="{{ $projectStartDate ?? date('Y-m-d') }}" min="{{ $projectStartDate }}" max="{{ $projectDeadlineDate }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">Target SLA (%)</label>
-                                <input type="number" name="tasks[0][sla_target]" value="100" min="0" max="100" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                                <label class="block text-sm text-gray-400 mb-1">Nilai SLA Maksimal</label>
+                                <div class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-gray-300">100% (dihitung dari deadline task)</div>
                             </div>
                         </div>
                     </div>
@@ -139,7 +145,7 @@ function addTask() {
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Deadline *</label>
-                    <input type="date" name="tasks[${index}][deadline]" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    <input type="date" name="tasks[${index}][deadline]" required min="{{ $projectStartDate }}" max="{{ $projectDeadlineDate }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
                 </div>
             </div>
             <div class="mb-3">
@@ -149,11 +155,11 @@ function addTask() {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Tanggal Mulai</label>
-                    <input type="date" name="tasks[${index}][planned_start_date]" value="${new Date().toISOString().split('T')[0]}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    <input type="date" name="tasks[${index}][planned_start_date]" value="{{ $projectStartDate ?? date('Y-m-d') }}" min="{{ $projectStartDate }}" max="{{ $projectDeadlineDate }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Target SLA (%)</label>
-                    <input type="number" name="tasks[${index}][sla_target]" value="100" min="0" max="100" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    <label class="block text-sm text-gray-400 mb-1">Nilai SLA Maksimal</label>
+                    <div class="w-full bg-gray-800 border border-gray-600 rounded p-2 text-gray-300">100% (dihitung dari deadline task)</div>
                 </div>
             </div>
         </div>

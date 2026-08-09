@@ -92,7 +92,8 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-gray-300">
-                                {{ $task->sla_target ?? 100 }}%
+                                <div class="font-semibold text-white">{{ $task->task_sla_percentage_formatted }}</div>
+                                <div class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', $task->sla_evaluation_status)) }}</div>
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex gap-2 justify-end">

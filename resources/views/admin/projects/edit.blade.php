@@ -30,11 +30,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Status Proyek</label>
-                <select name="status" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
-                    @foreach($statuses as $status)
-                    <option value="{{ $status }}" {{ old('status', $project->status) == $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="status" value="{{ $project->status === 'done' ? 'done' : 'ongoing' }}">
+                <div class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    {{ $project->status === 'done' ? 'Done' : 'Ongoing' }}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Status selesai hanya dapat ditetapkan oleh Project Management.</p>
             </div>
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Customer / Client</label>

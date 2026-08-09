@@ -397,12 +397,6 @@
                         <span class="text-white">{{ $project->deadline->format('d M Y') }}</span>
                     </div>
                     @endif
-                    @if($project->sla)
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Target SLA</span>
-                        <span class="text-white">{{ $project->sla }}%</span>
-                    </div>
-                    @endif
                     <div class="flex justify-between">
                         <span class="text-gray-400">SLA Proyek</span>
                         <span class="text-white">{{ $project->sla_percentage_formatted }}</span>

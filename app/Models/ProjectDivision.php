@@ -15,6 +15,10 @@ class ProjectDivision extends Model
         'progress',
     ];
 
+    protected $casts = [
+        'progress' => 'float',
+    ];
+
     /**
      * Relasi ke Project
      */
@@ -45,5 +49,44 @@ class ProjectDivision extends Model
     public function getTotalTasksCountAttribute()
     {
         return $this->tasks()->count();
+    }
+
+    public function getSlaSummaryAttribute(): array
+    {
+        $tasks = $this->relationLoaded('tasks')
+            ? $this->tasks
+            : $this->tasks()->get();
+
+        $evaluatedTasks = $tasks->filter(fn(ProjectTask $task) => $task->task_sla_percentage !== null);
+        $totalSlaPoints = round($evaluatedTasks->sum(fn(ProjectTask $task) => $task->task_sla_percentage), 2);
+        $evaluatedCount = $evaluatedTasks->count();
+
+        return [
+            'division_name' => $this->name,
+            'total_tasks' => $tasks->count(),
+            'completed_tasks' => $tasks->where('status', 'done')->count(),
+            'evaluated_tasks' => $evaluatedCount,
+            'on_time_tasks' => $tasks->where('sla_evaluation_status', 'completed_on_time')->count(),
+            'late_tasks' => $tasks->where('sla_evaluation_status', 'completed_late')->count(),
+            'on_track_tasks' => $tasks->where('sla_evaluation_status', 'on_track')->count(),
+            'warning_tasks' => $tasks->where('sla_evaluation_status', 'warning')->count(),
+            'breached_tasks' => $tasks->where('sla_evaluation_status', 'breached')->count(),
+            'sla_points' => $totalSlaPoints,
+            'sla_percentage' => $evaluatedCount > 0 ? round($totalSlaPoints / $evaluatedCount, 2) : null,
+        ];
+    }
+
+    public function getDivisionSlaPercentageAttribute(): ?float
+    {
+        return $this->sla_summary['sla_percentage'];
+    }
+
+    public function getDivisionSlaPercentageFormattedAttribute(): string
+    {
+        $percentage = $this->division_sla_percentage;
+
+        return $percentage === null
+            ? 'Belum tersedia'
+            : ProjectTask::formatSlaPercentage($percentage);
     }
 }

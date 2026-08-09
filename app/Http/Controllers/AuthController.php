@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\GoogleCalendarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,12 +38,6 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $user = Auth::user();
-
-        if (($user->role->name ?? null) === 'admin') {
-            app(GoogleCalendarService::class)->disconnect();
-        }
-
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -57,9 +50,7 @@ class AuthController extends Controller
 
         // Admin & Direktur → Dashboard Utama (/)
         if ($roleName === 'admin') {
-            return GoogleCalendarService::isConnected()
-                ? redirect()->intended('/dashboard')
-                : redirect()->route('auth.google');
+            return redirect()->intended('/dashboard');
         }
 
         if ($roleName === 'direktur') {

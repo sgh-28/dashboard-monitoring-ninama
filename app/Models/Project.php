@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use App\Services\ProjectProgressService;
 
 class Project extends Model
 {
@@ -25,13 +26,16 @@ class Project extends Model
         'sla',
         'rejection_reason',
         'status_text',
+        'completed_by',
+        'completed_at',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'deadline' => 'date',
-        'progress' => 'integer',
+        'completed_at' => 'datetime',
+        'progress' => 'float',
         'sla' => 'integer',
     ];
 
@@ -71,6 +75,11 @@ class Project extends Model
         return $this->belongsTo(User::class, 'customer_id');
     }
 
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+
     /**
      * ✅ BARU: Relasi ke Project Milestones
      */
@@ -103,10 +112,7 @@ class Project extends Model
      */
     public function getOverallProgressAttribute()
     {
-        if ($this->phases->count() === 0) return $this->progress; // Fallback ke kolom progress jika belum ada phases
-        
-        // Jika ada phases, hitung rata-rata dari phases
-        return round($this->phases->avg('progress'));
+        return ProjectProgressService::projectProgress($this);
     }
 
     /**
@@ -142,7 +148,12 @@ class Project extends Model
             'breached_tasks' => $tasks->where('sla_evaluation_status', 'breached')->count(),
             'sla_points' => $totalSlaPoints,
             'sla_percentage' => $evaluatedCount > 0 ? round($totalSlaPoints / $evaluatedCount, 2) : null,
-            'is_final' => $tasks->count() > 0 && $tasks->every(fn(ProjectTask $task) => $task->status === 'done'),
+            'is_final' => $tasks->count() > 0
+                && $this->status === 'done'
+                && filled($this->completed_by)
+                && filled($this->completed_at)
+                && $tasks->every(fn(ProjectTask $task) => $task->status === 'done')
+                && $tasks->every(fn(ProjectTask $task) => $task->verification_status === 'approved'),
         ];
     }
 
@@ -244,14 +255,7 @@ class Project extends Model
 
     public function updateProjectProgress()
     {
-        $divisions = $this->divisions;
-        
-        if ($divisions->count() > 0) {
-            $totalProgress = $divisions->sum('progress');
-            $averageProgress = round($totalProgress / $divisions->count());
-            
-            $this->update(['progress' => $averageProgress]);
-        }
+        ProjectProgressService::syncProject($this);
     }
 
     public function getDaysUntilDeadlineAttribute()

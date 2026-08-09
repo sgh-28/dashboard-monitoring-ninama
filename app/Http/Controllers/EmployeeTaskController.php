@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Services\MilestoneService;
+use App\Services\ProjectProgressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -63,6 +64,7 @@ class EmployeeTaskController extends Controller
         $project->load([
             'phases' => fn($q) => $q->orderBy('phase_order'),
             'customer',
+            'divisions.tasks',
             'tasks.division',
             'tasks.assignee',
             'tasks.verifier',
@@ -167,7 +169,6 @@ class EmployeeTaskController extends Controller
         $validated['verified_by'] = null;
         $validated['verified_at'] = null;
         $validated['completed_at'] = now();
-        $validated['actual_start_date'] = $task->actual_start_date ?? now()->toDateString();
         $validated['actual_end_date'] = now()->toDateString();
         $validated['progress'] = 100;
         
@@ -232,10 +233,13 @@ class EmployeeTaskController extends Controller
 
         $project->update([
             'status' => 'done',
-            'progress' => 100,
+            'completed_by' => $user->id,
+            'completed_at' => now(),
             'end_date' => now()->toDateString(),
             'status_text' => 'Selesai diverifikasi Project Management',
         ]);
+
+        ProjectProgressService::syncProject($project);
 
         return redirect()->route('employee.tasks.index')
             ->with('success', "Proyek {$project->name} berhasil ditandai selesai.");

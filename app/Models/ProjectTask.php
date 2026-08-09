@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
+use App\Services\ProjectProgressService;
 
 class ProjectTask extends Model
 {
@@ -57,6 +58,17 @@ class ProjectTask extends Model
         'sla_target' => 'integer',
         'is_notified' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (ProjectTask $task) {
+            ProjectProgressService::syncProject($task->project_id);
+        });
+
+        static::deleted(function (ProjectTask $task) {
+            ProjectProgressService::syncProject($task->project_id);
+        });
+    }
 
     /**
      * Get the project that owns the task.
@@ -179,7 +191,8 @@ class ProjectTask extends Model
 
     public function slaTargetDate(): ?Carbon
     {
-        $targetDate = $this->planned_end_date ?: $this->deadline;
+        // Legacy planned_end_date dipertahankan untuk timeline, tetapi SLA aktual memakai deadline task.
+        $targetDate = $this->deadline ?: $this->planned_end_date;
 
         return $targetDate ? Carbon::parse($targetDate)->startOfDay() : null;
     }

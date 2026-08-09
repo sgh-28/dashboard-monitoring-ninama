@@ -42,12 +42,16 @@ Route::get('/home', function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+    Route::post('/auth/google/disconnect', [GoogleAuthController::class, 'disconnect'])->name('auth.google.disconnect');
 });
 
 // ==================== TEST INTEGRATION ====================
-Route::middleware(['auth', 'throttle:5,1'])->group(function () {
-    Route::get('/test-integration', [TestIntegrationController::class, 'testAll'])
-        ->name('test.integration');
+Route::middleware(['auth', 'role:admin', 'throttle:5,1'])->group(function () {
+    Route::get('/test-integration', function (TestIntegrationController $controller) {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+
+        return $controller->testAll();
+    })->name('test.integration');
 });
 
 // ==================== PROTECTED ROUTES ====================
@@ -115,17 +119,6 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{offer}', [MarketingOfferController::class, 'destroy'])->name('destroy');
     });
     
-    // ==================== PROJECT ROUTES (UMUM) ====================
-    Route::prefix('user/projects')->name('user.projects.')->group(function () {
-        Route::get('/', [ProjectController::class, 'index'])->name('index');
-        Route::get('/create', [ProjectController::class, 'create'])->name('create');
-        Route::post('/', [ProjectController::class, 'store'])->name('store');
-        Route::get('/{project}', [ProjectController::class, 'show'])->name('show');
-        Route::get('/{project}/edit', [ProjectController::class, 'edit'])->name('edit');
-        Route::put('/{project}', [ProjectController::class, 'update'])->name('update');
-        Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('destroy');
-    });
-    
     // ==================== TASK MANAGEMENT ROUTES ====================
     
     // Admin Task Management (Admin Only)
@@ -143,7 +136,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Employee/Marketing Task Management (For assigned users only)
-    Route::middleware(['role:pegawai,marketing'])->prefix('my-tasks')->name('employee.tasks.')->group(function () {
+    Route::middleware(['role:pegawai'])->prefix('my-tasks')->name('employee.tasks.')->group(function () {
         Route::get('/', [EmployeeTaskController::class, 'index'])->name('index');
         Route::get('/projects/{project}', [EmployeeTaskController::class, 'showManagedProject'])->name('projects.show');
         Route::post('/projects/{project}/complete', [EmployeeTaskController::class, 'completeProject'])->name('projects.complete');
@@ -163,24 +156,28 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:customer'])->prefix('customer')->name('customer.')->group(function () {
         Route::get('/dashboard', [CustomerController::class, 'index'])->name('dashboard');
         Route::get('/projects', [CustomerController::class, 'projects'])->name('projects');
+        Route::get('/projects/{project}', [CustomerController::class, 'showProject'])->name('projects.show');
         Route::get('/category/{category}', [CustomerController::class, 'show'])->name('category');
     });
     
-    // ==================== ADMIN ROUTES ====================
+    // ==================== ADMIN/DIREKTUR READ-ONLY MARKETING ROUTES ====================
     Route::middleware(['role:admin,direktur'])->prefix('admin')->name('admin.')->group(function () {
-        
-        Route::get('/dashboard', function () { return view('admin.dashboard'); })->name('dashboard');
-        
-        // Route AJAX untuk divisi dinamis
-        Route::get('/projects/divisions/{category}', [AdminProjectController::class, 'getDivisionsByCategory'])
-            ->name('admin.projects.divisions');
-        
         Route::prefix('marketing')->name('marketing.')->group(function () {
             Route::get('/', [AdminMarketingController::class, 'index'])->name('index');
             Route::get('/export', [AdminMarketingController::class, 'exportMarketing'])->name('export');
             Route::get('/{category}/export', [AdminMarketingController::class, 'exportMarketing'])->name('export.category');
             Route::get('/{offer}', [AdminMarketingController::class, 'show'])->name('show');
         });
+    });
+    
+    // ==================== ADMIN ROUTES ====================
+    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        
+        Route::get('/dashboard', function () { return view('admin.dashboard'); })->name('dashboard');
+        
+        // Route AJAX untuk divisi dinamis
+        Route::get('/projects/divisions/{category}', [AdminProjectController::class, 'getDivisionsByCategory'])
+            ->name('projects.divisions');
         
         Route::prefix('projects')->name('projects.')->group(function () {
             Route::get('/', [AdminProjectController::class, 'index'])->name('index');

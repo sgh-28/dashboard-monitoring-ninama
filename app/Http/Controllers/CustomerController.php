@@ -104,6 +104,11 @@ class CustomerController extends Controller
         ));
     }
 
+    public function projects()
+    {
+        return $this->index();
+    }
+
     public function showProject(Project $project)
     {
         $user = Auth::user();

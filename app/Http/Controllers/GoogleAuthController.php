@@ -22,4 +22,12 @@ class GoogleAuthController extends Controller
         }
         return redirect()->route('main.dashboard')->with('error', 'Koneksi Google Calendar gagal.');
     }
+
+    public function disconnect()
+    {
+        app(GoogleCalendarService::class)->disconnect();
+
+        return redirect()->route('main.dashboard')
+            ->with('success', 'Google Calendar berhasil diputuskan.');
+    }
 }

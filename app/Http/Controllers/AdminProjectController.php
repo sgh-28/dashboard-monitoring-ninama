@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\ProjectDivision;
+use App\Services\MilestoneService;
+use App\Services\ProjectProgressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -64,7 +66,7 @@ class AdminProjectController extends Controller
     public function create()
     {
         $categories = ['web', 'internet', 'cctv'];
-        $statuses = ['ongoing', 'done'];
+        $statuses = ['ongoing'];
         $customers = User::whereHas('role', fn($q) => $q->where('name', 'customer'))->get();
         
         return view('admin.projects.create', compact('categories', 'statuses', 'customers'));
@@ -75,7 +77,7 @@ class AdminProjectController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:web,internet,cctv',
-            'status' => 'required|in:ongoing,done',
+            'status' => 'nullable|in:ongoing',
             'deadline' => 'nullable|date|after_or_equal:start_date',
             'start_date' => 'nullable|date',
             'sla' => 'nullable|integer|min:0|max:100',
@@ -118,7 +120,7 @@ class AdminProjectController extends Controller
         $project = Project::create([
             'name' => $request->name,
             'category' => $request->category,
-            'status' => $request->status,
+            'status' => 'ongoing',
             'client_name' => $request->client_name ?? $customer->name,
             'customer_id' => $customer->id,
             'address' => $request->address,
@@ -126,7 +128,7 @@ class AdminProjectController extends Controller
             'deadline' => $request->deadline,
             'sla' => $request->sla ?? 100,
             'rejection_reason' => null,
-            'progress' => $request->status === 'done' ? 100 : 0,
+            'progress' => 0,
         ]);
 
         if ($request->filled('divisions')) {
@@ -155,7 +157,7 @@ class AdminProjectController extends Controller
     public function edit(Project $project)
     {
         $categories = ['web', 'internet', 'cctv'];
-        $statuses = ['ongoing', 'done'];
+        $statuses = [$project->status === 'done' ? 'done' : 'ongoing'];
         $projectDivisions = $project->divisions->pluck('name')->toArray();
         $customers = User::whereHas('role', fn($q) => $q->where('name', 'customer'))->get();
         
@@ -167,21 +169,48 @@ class AdminProjectController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:web,internet,cctv',
-            'status' => 'required|in:ongoing,done',
+            'status' => 'nullable|string',
+            'customer_id' => 'required|exists:users,id',
             'deadline' => 'nullable|date|after_or_equal:start_date',
             'start_date' => 'nullable|date',
             'sla' => 'nullable|integer|min:0|max:100',
-            'progress' => 'nullable|integer|min:0|max:100',
             'divisions' => 'nullable|array',
             'divisions.*' => 'string|max:100',
         ]);
 
         $customer = User::findOrFail($request->customer_id);
+
+        if ($project->status === 'done') {
+            return back()
+                ->withInput()
+                ->with('error', 'Proyek yang sudah selesai tidak dapat diubah kembali oleh Admin.');
+        }
+
+        if ($project->category !== $request->category && $project->tasks()->exists()) {
+            return back()
+                ->withInput()
+                ->withErrors(['category' => 'Kategori proyek tidak dapat diganti karena proyek sudah memiliki task.']);
+        }
+
+        $invalidTasks = $this->tasksOutsideProjectPeriod(
+            $project,
+            $request->start_date,
+            $request->deadline
+        );
+
+        if ($invalidTasks->isNotEmpty()) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'deadline' => 'Periode proyek tidak dapat diubah karena ada task di luar periode baru: '
+                        . $invalidTasks->pluck('title')->implode(', '),
+                ]);
+        }
         
         $project->update([
             'name' => $request->name,
             'category' => $request->category,
-            'status' => $request->status,
+            'status' => 'ongoing',
             'client_name' => $request->client_name ?? $customer->name,
             'customer_id' => $customer->id,
             'address' => $request->address,
@@ -189,23 +218,18 @@ class AdminProjectController extends Controller
             'deadline' => $request->deadline,
             'sla' => $request->sla ?? 100,
             'rejection_reason' => null,
-            'progress' => $request->progress ?? ($request->status === 'done' ? 100 : $project->progress),
+            'progress' => $project->progress,
         ]);
 
-        if ($request->filled('divisions')) {
-            $project->divisions()->delete();
-            foreach ($request->divisions as $divisionName) {
-                ProjectDivision::create([
-                    'project_id' => $project->id,
-                    'name' => $divisionName,
-                    'progress' => 0,
-                ]);
+        if ($request->has('divisions')) {
+            $divisionError = $this->syncProjectDivisions($project, $request->divisions ?? []);
+
+            if ($divisionError) {
+                return back()->withInput()->withErrors(['divisions' => $divisionError]);
             }
         }
 
-        if ($request->status === 'done' && $project->progress !== 100) {
-            $project->update(['progress' => 100]);
-        }
+        ProjectProgressService::syncProject($project);
 
         return redirect()->route('admin.projects.index')
             ->with('success', "Proyek {$project->name} berhasil diperbarui!");
@@ -228,6 +252,27 @@ class AdminProjectController extends Controller
         return view('admin.projects.manage', compact('project', 'employees'));
     }
 
+    public function show(Project $project)
+    {
+        $project->load([
+            'phases' => fn($q) => $q->orderBy('phase_order'),
+            'customer',
+            'completedBy',
+            'divisions.tasks.assignee',
+            'tasks.division',
+            'tasks.assignee',
+            'tasks.verifier',
+        ]);
+
+        $overallProgress = $project->overall_progress;
+        $slaStatus = $project->project_sla_status;
+        $slaSummary = $project->sla_summary;
+        $timelineData = app(MilestoneService::class)->buildProjectTimeline($project);
+        $canVerifyTasks = false;
+
+        return view('projects.detail', compact('project', 'overallProgress', 'slaStatus', 'slaSummary', 'timelineData', 'canVerifyTasks'));
+    }
+
     /**
      * ✅ BARU: API Endpoint untuk mengambil divisi berdasarkan kategori (digunakan oleh JS)
      */
@@ -235,6 +280,65 @@ class AdminProjectController extends Controller
     {
         $divisions = self::CATEGORY_DIVISIONS[$category] ?? [];
         return response()->json($divisions);
+    }
+
+    private function tasksOutsideProjectPeriod(Project $project, ?string $startDate, ?string $deadline)
+    {
+        if (!$startDate || !$deadline) {
+            return collect();
+        }
+
+        $projectStart = \Carbon\Carbon::parse($startDate)->startOfDay();
+        $projectEnd = \Carbon\Carbon::parse($deadline)->startOfDay();
+
+        return $project->tasks()
+            ->get()
+            ->filter(function ($task) use ($projectStart, $projectEnd) {
+                $taskStart = $task->planned_start_date
+                    ? \Carbon\Carbon::parse($task->planned_start_date)->startOfDay()
+                    : null;
+                $taskEnd = $task->deadline
+                    ? \Carbon\Carbon::parse($task->deadline)->startOfDay()
+                    : null;
+
+                return ($taskStart && ($taskStart->lt($projectStart) || $taskStart->gt($projectEnd)))
+                    || ($taskEnd && ($taskEnd->lt($projectStart) || $taskEnd->gt($projectEnd)));
+            });
+    }
+
+    private function syncProjectDivisions(Project $project, array $selectedDivisions): ?string
+    {
+        $selectedDivisions = collect($selectedDivisions)
+            ->map(fn($division) => trim((string) $division))
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($selectedDivisions as $divisionName) {
+            ProjectDivision::firstOrCreate(
+                ['project_id' => $project->id, 'name' => $divisionName],
+                ['progress' => 0]
+            );
+        }
+
+        $divisionsToRemove = $project->divisions()
+            ->whereNotIn('name', $selectedDivisions->all())
+            ->get();
+
+        $usedDivisions = $divisionsToRemove
+            ->filter(fn(ProjectDivision $division) => $division->tasks()->exists());
+
+        if ($usedDivisions->isNotEmpty()) {
+            return 'Divisi berikut masih memiliki task dan tidak boleh dihapus: '
+                . $usedDivisions->pluck('name')->implode(', ')
+                . '. Hapus atau pindahkan task terlebih dahulu.';
+        }
+
+        foreach ($divisionsToRemove as $division) {
+            $division->delete();
+        }
+
+        return null;
     }
 
     /**

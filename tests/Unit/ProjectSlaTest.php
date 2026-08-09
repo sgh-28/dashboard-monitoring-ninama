@@ -202,6 +202,36 @@ class ProjectSlaTest extends TestCase
         $this->assertSame('Belum tersedia', $project->sla_percentage_formatted);
     }
 
+    public function test_sla_is_not_final_when_task_is_not_approved(): void
+    {
+        $project = $this->projectWithTasks([
+            $this->task('done', '2026-07-01', '2026-07-05', '2026-07-05'),
+        ]);
+        $project->fill(['status' => 'done', 'completed_by' => 10, 'completed_at' => '2026-07-06 08:00:00']);
+
+        $this->assertFalse($project->sla_is_final);
+    }
+
+    public function test_sla_is_not_final_when_project_is_not_completed_by_pm(): void
+    {
+        $task = $this->task('done', '2026-07-01', '2026-07-05', '2026-07-05');
+        $task->verification_status = 'approved';
+        $project = $this->projectWithTasks([$task]);
+        $project->status = 'ongoing';
+
+        $this->assertFalse($project->sla_is_final);
+    }
+
+    public function test_sla_is_final_when_all_tasks_done_approved_and_project_completed_by_pm(): void
+    {
+        $task = $this->task('done', '2026-07-01', '2026-07-05', '2026-07-05');
+        $task->verification_status = 'approved';
+        $project = $this->projectWithTasks([$task]);
+        $project->fill(['status' => 'done', 'completed_by' => 10, 'completed_at' => '2026-07-06 08:00:00']);
+
+        $this->assertTrue($project->sla_is_final);
+    }
+
     public function test_dashboard_values_are_rounded_to_two_decimals(): void
     {
         $project = $this->projectWithTasks([

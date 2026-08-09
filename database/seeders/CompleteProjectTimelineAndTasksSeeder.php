@@ -34,10 +34,6 @@ class CompleteProjectTimelineAndTasksSeeder extends Seeder
                 : Carbon::parse($project->created_at ?? now())->startOfDay();
 
             $cursor = $projectStart->copy();
-            $phaseCount = max(1, count($templates));
-            $projectProgress = $project->status === 'done'
-                ? 100
-                : max(0, min(100, (int) ($project->progress ?? 0)));
 
             foreach ($templates as $index => $template) {
                 $order = $index + 1;
@@ -45,32 +41,27 @@ class CompleteProjectTimelineAndTasksSeeder extends Seeder
                 $phaseEnd = $cursor->copy()->addDays(max(1, (int) $template['days']) - 1);
                 $cursor = $phaseEnd->copy()->addDay();
 
-                [$phaseStatus, $phaseProgress] = $this->phaseState($project->status, $projectProgress, $order, $phaseCount);
-
                 $division = ProjectDivision::firstOrCreate(
                     ['project_id' => $project->id, 'name' => $template['division']],
-                    ['progress' => $phaseProgress]
+                    ['progress' => 0]
                 );
 
                 if ($division->wasRecentlyCreated) {
                     $createdDivisions++;
-                } elseif ($division->progress === null) {
-                    $division->update(['progress' => $phaseProgress]);
-                    $updatedRecords++;
                 }
 
                 $phase = ProjectPhase::firstOrCreate(
                     ['project_id' => $project->id, 'phase_order' => $order],
                     [
                         'phase_name' => $template['name'],
-                        'status' => $phaseStatus,
-                        'progress' => $phaseProgress,
+                        'status' => 'pending',
+                        'progress' => 0,
                         'start_date' => $phaseStart->toDateString(),
                         'target_date' => $phaseEnd->toDateString(),
-                        'completed_date' => $phaseStatus === 'completed' ? $phaseEnd->toDateString() : null,
+                        'completed_date' => null,
                         'sla_days' => max(1, (int) $template['days']),
-                        'actual_days' => $phaseStatus === 'completed' ? max(1, (int) $template['days']) : null,
-                        'sla_status' => $phaseStatus === 'completed' ? 'completed' : 'on_track',
+                        'actual_days' => null,
+                        'sla_status' => 'on_track',
                         'notes' => "Timeline {$template['name']} untuk {$project->name}.",
                     ]
                 );
@@ -109,15 +100,15 @@ class CompleteProjectTimelineAndTasksSeeder extends Seeder
                         'title' => $template['name'],
                         'description' => "Task {$template['name']} untuk proyek {$project->name}.",
                         'deadline' => $phaseEnd->toDateString(),
-                        'status' => $phaseStatus === 'completed' ? 'done' : ($phaseStatus === 'ongoing' ? 'ongoing' : 'pending'),
-                        'progress' => $phaseProgress,
+                        'status' => 'pending',
+                        'progress' => 0,
                         'planned_start_date' => $phaseStart->toDateString(),
                         'planned_end_date' => $phaseEnd->toDateString(),
-                        'actual_start_date' => $phaseStatus === 'pending' ? null : $phaseStart->toDateString(),
-                        'actual_end_date' => $phaseStatus === 'completed' ? $phaseEnd->toDateString() : null,
-                        'completed_at' => $phaseStatus === 'completed' ? $phaseEnd->copy()->setTime(16, 30) : null,
-                        'completion_notes' => $phaseStatus === 'completed' ? "Task {$template['name']} selesai." : null,
-                        'verification_status' => $phaseStatus === 'completed' ? 'approved' : 'pending',
+                        'actual_start_date' => null,
+                        'actual_end_date' => null,
+                        'completed_at' => null,
+                        'completion_notes' => null,
+                        'verification_status' => 'pending',
                         'sla_target' => 100,
                         'is_notified' => false,
                     ]);
@@ -149,30 +140,7 @@ class CompleteProjectTimelineAndTasksSeeder extends Seeder
             }
         }
 
-        $this->command?->info("Project timeline/task completion done. Phases created: {$createdPhases}, divisions created: {$createdDivisions}, tasks created: {$createdTasks}, records updated: {$updatedRecords}.");
-    }
-
-    private function phaseState(string $projectStatus, int $projectProgress, int $order, int $phaseCount): array
-    {
-        if ($projectStatus === 'done') {
-            return ['completed', 100];
-        }
-
-        $phaseWeight = 100 / $phaseCount;
-        $phaseStartPercent = ($order - 1) * $phaseWeight;
-        $phaseEndPercent = $order * $phaseWeight;
-
-        if ($projectProgress >= $phaseEndPercent) {
-            return ['completed', 100];
-        }
-
-        if ($projectProgress > $phaseStartPercent) {
-            $phaseProgress = (int) round((($projectProgress - $phaseStartPercent) / $phaseWeight) * 100);
-
-            return ['ongoing', max(1, min(99, $phaseProgress))];
-        }
-
-        return ['pending', 0];
+        $this->command?->info("Missing project timeline/task records filled safely. Phases created: {$createdPhases}, divisions created: {$createdDivisions}, tasks created: {$createdTasks}, records updated: {$updatedRecords}.");
     }
 
     private function assigneeId(string $category, string $division): ?int

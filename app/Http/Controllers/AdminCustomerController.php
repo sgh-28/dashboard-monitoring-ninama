@@ -159,6 +159,22 @@ class AdminCustomerController extends Controller
         return view('admin.customers.edit', compact('customer', 'categories', 'assignedCategories'));
     }
 
+    public function show(User $customer)
+    {
+        if (!$customer->hasRole('customer')) {
+            abort(404);
+        }
+
+        $customer->load([
+            'customerProjects' => fn($query) => $query
+                ->with(['divisions.tasks', 'tasks'])
+                ->whereNotIn('status', ['rejected'])
+                ->orderByDesc('created_at'),
+        ]);
+
+        return view('admin.customers.show', compact('customer'));
+    }
+
     /**
      * Update customer
      */

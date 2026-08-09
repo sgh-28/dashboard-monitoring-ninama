@@ -8,6 +8,8 @@ use App\Models\ProjectDivision;
 use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\MilestoneService;
+use App\Services\ProjectProgressService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -24,11 +26,8 @@ class AdminTaskController extends Controller
 
     public function index()
     {
-        $tasks = ProjectTask::with(['project', 'assignee', 'division'])
-            ->orderByDesc('deadline')
-            ->paginate(15);
-        
-        return view('admin.tasks.index', compact('tasks'));
+        return redirect()->route('admin.projects.index')
+            ->with('info', 'Pilih proyek terlebih dahulu untuk mengelola task.');
     }
 
     public function indexByProject($project_id)
@@ -59,11 +58,20 @@ class AdminTaskController extends Controller
             'project_id' => 'required|exists:projects,id',
             'division_id' => 'required|exists:project_divisions,id',
             'tasks' => 'required|array',
+            'tasks.*.title' => 'required|string|max:255',
+            'tasks.*.deadline' => 'required|date',
+            'tasks.*.planned_start_date' => 'required|date',
+            'tasks.*.description' => 'nullable|string',
         ]);
 
         $project = Project::findOrFail($request->project_id);
         $divisionId = $request->division_id;
         $division = ProjectDivision::where('project_id', $project->id)->findOrFail($divisionId);
+
+        $periodError = $this->validateProjectPeriod($project);
+        if ($periodError) {
+            return back()->withInput()->withErrors(['project_id' => $periodError]);
+        }
         
         $assignee = User::where('jabatan', $division->name)
             ->where('bidang', $project->category)
@@ -79,9 +87,16 @@ class AdminTaskController extends Controller
         }
 
         $tasksCreated = 0;
-        foreach ($request->tasks ?? [] as $taskData) {
-            if (empty($taskData['title']) || empty($taskData['deadline'])) {
-                continue;
+        foreach ($request->tasks ?? [] as $index => $taskData) {
+            $dateError = $this->validateTaskDates(
+                $project,
+                $taskData['planned_start_date'] ?? null,
+                $taskData['deadline'] ?? null,
+                $index
+            );
+
+            if ($dateError) {
+                return back()->withInput()->withErrors(["tasks.{$index}.deadline" => $dateError]);
             }
             
             $task = ProjectTask::create([
@@ -93,7 +108,8 @@ class AdminTaskController extends Controller
                 'deadline' => $taskData['deadline'],
                 'planned_start_date' => $taskData['planned_start_date'] ?? now()->toDateString(),
                 'planned_end_date' => $taskData['deadline'],
-                'sla_target' => $taskData['sla_target'] ?? 100,
+                // Legacy column: SLA actual dihitung dari tanggal rencana, deadline, dan selesai aktual.
+                'sla_target' => 100,
                 'status' => 'pending',
             ]);
             
@@ -108,6 +124,8 @@ class AdminTaskController extends Controller
         }
         
         if ($tasksCreated > 0) {
+            ProjectProgressService::syncProject($project);
+
             try {
                 $this->milestoneService->generateMilestonesFromTasks($project->id);
             } catch (\Exception $e) {
@@ -121,35 +139,70 @@ class AdminTaskController extends Controller
 
     public function edit(ProjectTask $task)
     {
+        $task->load(['project.divisions', 'division']);
         $projects = Project::all();
+        $divisions = $task->project?->divisions ?? collect();
         $users = User::whereHas('role', function($q) {
                 $q->where('name', 'pegawai');
             })
             ->with('role')
             ->get();
         
-        return view('admin.tasks.edit', compact('task', 'projects', 'users'));
+        return view('admin.tasks.edit', compact('task', 'projects', 'users', 'divisions'));
     }
 
     public function update(Request $request, ProjectTask $task)
     {
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
-            'division_id' => 'nullable|exists:project_divisions,id',
+            'division_id' => 'required|exists:project_divisions,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'assigned_to' => 'required|exists:users,id',
             'deadline' => 'required|date',
             'status' => 'required|in:pending,ongoing,done',
-            'sla_target' => 'nullable|integer|min:0|max:100',
-            'planned_start_date' => 'nullable|date',
-            'planned_end_date' => 'nullable|date',
+            'planned_start_date' => 'required|date',
             'actual_start_date' => 'nullable|date',
             'actual_end_date' => 'nullable|date',
             'delay_reason' => 'nullable|string',
         ]);
 
+        $project = Project::findOrFail($validated['project_id']);
+        $division = ProjectDivision::where('project_id', $project->id)
+            ->whereKey($validated['division_id'])
+            ->first();
+
+        if (!$division) {
+            return back()->withInput()->withErrors(['division_id' => 'Divisi harus berasal dari proyek yang dipilih.']);
+        }
+
+        $periodError = $this->validateProjectPeriod($project);
+        if ($periodError) {
+            return back()->withInput()->withErrors(['project_id' => $periodError]);
+        }
+
+        $dateError = $this->validateTaskDates($project, $validated['planned_start_date'], $validated['deadline']);
+        if ($dateError) {
+            return back()->withInput()->withErrors(['deadline' => $dateError]);
+        }
+
+        $assignee = User::whereKey($validated['assigned_to'])
+            ->where('bidang', $project->category)
+            ->where('jabatan', $division->name)
+            ->whereHas('role', fn($q) => $q->where('name', 'pegawai'))
+            ->first();
+
+        if (!$assignee) {
+            return back()->withInput()->withErrors([
+                'assigned_to' => 'Pegawai harus memiliki bidang dan jabatan yang sesuai dengan proyek dan divisi.',
+            ]);
+        }
+
+        $validated['planned_end_date'] = $validated['deadline'];
+        $validated['sla_target'] = 100;
+
         $task->update($validated);
+        ProjectProgressService::syncProject($task->project_id);
 
         if ($request->has('planned_end_date') || $request->has('deadline')) {
             try {
@@ -178,5 +231,42 @@ class AdminTaskController extends Controller
         
         return redirect()->route('admin.tasks.index.by.project', $projectId)
             ->with('success', '🗑️ Task berhasil dihapus.');
+    }
+
+    private function validateProjectPeriod(Project $project): ?string
+    {
+        if (!$project->start_date || !$project->deadline) {
+            return 'Proyek harus memiliki tanggal mulai dan deadline sebelum task dibuat.';
+        }
+
+        return null;
+    }
+
+    private function validateTaskDates(Project $project, ?string $taskStart, ?string $taskDeadline, ?int $index = null): ?string
+    {
+        if (!$taskStart || !$taskDeadline) {
+            return 'Tanggal mulai dan deadline task wajib diisi.';
+        }
+
+        $projectStart = Carbon::parse($project->start_date)->startOfDay();
+        $projectEnd = Carbon::parse($project->deadline)->startOfDay();
+        $start = Carbon::parse($taskStart)->startOfDay();
+        $deadline = Carbon::parse($taskDeadline)->startOfDay();
+        $label = $index === null ? 'Task' : 'Task ke-' . ($index + 1);
+        $period = $projectStart->format('d/m/Y') . ' - ' . $projectEnd->format('d/m/Y');
+
+        if ($start->lt($projectStart) || $start->gt($projectEnd)) {
+            return "{$label}: tanggal mulai harus berada dalam periode proyek ({$period}).";
+        }
+
+        if ($deadline->lt($start)) {
+            return "{$label}: deadline task tidak boleh lebih awal dari tanggal mulai.";
+        }
+
+        if ($deadline->gt($projectEnd)) {
+            return "{$label}: deadline task harus berada dalam periode proyek ({$period}).";
+        }
+
+        return null;
     }
 }

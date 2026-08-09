@@ -135,10 +135,9 @@
 
                         <div>
                             <label class="block text-sm text-gray-400 mb-1">Status Proyek</label>
-                            <select name="status" id="project-status" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
-                                <option value="ongoing" {{ old('status', 'ongoing') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                                <option value="done" {{ old('status') == 'done' ? 'selected' : '' }}>Selesai (Done)</option>
-                            </select>
+                            <input type="hidden" name="status" value="ongoing">
+                            <div class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">Ongoing</div>
+                            <p class="text-xs text-gray-500 mt-1">Status selesai hanya dapat ditetapkan oleh Project Management setelah semua task disetujui.</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -156,9 +155,11 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm text-gray-400 mb-1">Target SLA (%)</label>
-                            <input type="number" name="sla" value="{{ old('sla', 100) }}" min="0" max="100" 
-                                   class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                            <label class="block text-sm text-gray-400 mb-1">SLA Proyek</label>
+                            <input type="hidden" name="sla" value="100">
+                            <div class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-gray-300">
+                                Dihitung otomatis dari SLA task
+                            </div>
                         </div>
 
                         <div>
