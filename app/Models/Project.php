@@ -152,6 +152,7 @@ class Project extends Model
                 && $this->status === 'done'
                 && filled($this->completed_by)
                 && filled($this->completed_at)
+                && $this->completedByIsAuthorizedProjectManagement()
                 && $tasks->every(fn(ProjectTask $task) => $task->status === 'done')
                 && $tasks->every(fn(ProjectTask $task) => $task->verification_status === 'approved'),
         ];
@@ -237,6 +238,25 @@ class Project extends Model
         }
 
         return $this->tasks()->get();
+    }
+
+    private function completedByIsAuthorizedProjectManagement(): bool
+    {
+        if (!$this->completed_by) {
+            return false;
+        }
+
+        $user = $this->relationLoaded('completedBy')
+            ? $this->completedBy
+            : $this->completedBy()->first();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole('pegawai')
+            && strcasecmp(trim((string) $user->jabatan), 'Project Management') === 0
+            && $user->bidang === $this->category;
     }
 
     // ==========================================

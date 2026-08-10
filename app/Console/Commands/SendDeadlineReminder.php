@@ -3,38 +3,36 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Project;
-use App\Services\WhatsAppService;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\DeadlineMail;
+use App\Models\ProjectTask;
+use App\Services\NotificationService;
+use Carbon\Carbon;
 
 class SendDeadlineReminder extends Command
 {
     protected $signature = 'ninama:send-reminders';
-    protected $description = 'Send reminders for upcoming project deadlines';
+    protected $description = 'Send H-3 and H-1 reminders for unfinished task deadlines';
 
-    public function handle()
+    public function handle(NotificationService $notificationService): int
     {
-        $today = now();
-        $projects = Project::whereBetween('deadline', [
-            $today->toDateString(),
-            $today->copy()->addDays(3)->toDateString()
-        ])->get();
+        $today = Carbon::now(config('app.timezone', 'Asia/Jakarta'))->startOfDay();
+        $processed = 0;
 
-        foreach ($projects as $p) {
-            // WhatsApp
-            $wa = new WhatsAppService();
-            $wa->sendMessage(
-                config('services.callmebot.phone_to'),
-                "Reminder: Proyek {$p->name} mendekati deadline pada {$p->deadline}"
-            );
+        foreach ([3, 1] as $daysBefore) {
+            $deadline = $today->copy()->addDays($daysBefore)->toDateString();
 
-            // Email
-            Mail::to(config('mail.from.address'))
-                ->send(new DeadlineMail($p->name, $p->deadline));
+            $tasks = ProjectTask::with(['assignee', 'project'])
+                ->whereDate('deadline', $deadline)
+                ->whereNotIn('status', ['done', 'completed'])
+                ->whereNotNull('assigned_to')
+                ->get();
+
+            foreach ($tasks as $task) {
+                $notificationService->sendDeadlineReminder($task, $daysBefore);
+                $processed++;
+            }
         }
 
-        $this->info('Reminders sent for '.$projects->count().' projects.');
+        $this->info("Deadline reminder processed for {$processed} task(s).");
         
         return Command::SUCCESS;
     }

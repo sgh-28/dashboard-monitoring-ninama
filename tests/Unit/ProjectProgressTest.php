@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectDivision;
 use App\Models\ProjectTask;
 use App\Services\ProjectProgressService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class ProjectProgressTest extends TestCase
@@ -18,9 +19,7 @@ class ProjectProgressTest extends TestCase
         $this->assertSame(0.0, $project->overall_progress);
     }
 
-    /**
-     * @dataProvider progressCases
-     */
+    #[DataProvider('progressCases')]
     public function test_project_progress_uses_done_tasks_only(int $doneTasks, float $expected): void
     {
         $tasks = [];

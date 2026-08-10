@@ -20,6 +20,9 @@ class Notification extends Model
         'message',
         'channel',
         'status',
+        'notification_type',
+        'reminder_days_before',
+        'reminder_date',
         'response_log',
     ];
 
@@ -28,6 +31,7 @@ class Notification extends Model
      */
     protected $casts = [
         'sent_at' => 'datetime',
+        'reminder_date' => 'date',
     ];
 
     /**

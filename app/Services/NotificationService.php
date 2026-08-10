@@ -8,6 +8,7 @@ use App\Models\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class NotificationService
 {
@@ -56,22 +57,60 @@ class NotificationService
     {
         $assignee = $task->assignee;
         
-        if (!$assignee || $task->status === 'done') {
-            return false;
+        if (!$assignee || $task->status === 'done' || !$task->deadline) {
+            return [
+                'whatsapp' => 'skipped',
+                'email' => 'skipped',
+                'calendar' => 'skipped',
+            ];
         }
 
         $message = $this->buildReminderMessage($task, $daysBefore);
+        $results = [];
 
-        // Kirim WhatsApp
-        $this->sendWhatsApp($assignee, $message, $task);
+        foreach (['whatsapp', 'email', 'calendar'] as $channel) {
+            if ($this->reminderAlreadyRecorded($task, $channel, $daysBefore)) {
+                $results[$channel] = 'skipped';
+                continue;
+            }
 
-        // Kirim Email
-        $this->sendEmail($assignee, $task, true);
+            $results[$channel] = match ($channel) {
+                'whatsapp' => $this->sendWhatsApp($assignee, $message, $task, [
+                    'title' => "Reminder H-{$daysBefore} Task",
+                    'notification_type' => 'deadline_reminder',
+                    'reminder_days_before' => $daysBefore,
+                    'reminder_date' => now(config('app.timezone', 'Asia/Jakarta'))->toDateString(),
+                ]),
+                'email' => $this->sendEmail($assignee, $task, true, $message, [
+                    'notification_type' => 'deadline_reminder',
+                    'reminder_days_before' => $daysBefore,
+                    'reminder_date' => now(config('app.timezone', 'Asia/Jakarta'))->toDateString(),
+                ]),
+                'calendar' => $this->updateCalendarEvent($assignee, $task, $daysBefore),
+            };
+        }
 
-        // Update Google Calendar (tambah reminder)
-        $this->updateCalendarEvent($assignee, $task, $daysBefore);
+        return $results;
+    }
 
-        return true;
+    private function reminderAlreadyRecorded(ProjectTask $task, string $channel, int $daysBefore): bool
+    {
+        return Notification::query()
+            ->where('project_task_id', $task->id)
+            ->where('channel', $channel)
+            ->where('notification_type', 'deadline_reminder')
+            ->where('reminder_days_before', $daysBefore)
+            ->whereDate('reminder_date', now(config('app.timezone', 'Asia/Jakarta'))->toDateString())
+            ->exists();
+    }
+
+    private function notificationMeta(array $meta = []): array
+    {
+        return array_merge([
+            'notification_type' => 'task_notification',
+            'reminder_days_before' => null,
+            'reminder_date' => null,
+        ], $meta);
     }
 
     /**
@@ -113,10 +152,13 @@ class NotificationService
     /**
      * Kirim WhatsApp via Fonnte API
      */
-    private function sendWhatsApp(User $user, string $message, ProjectTask $task): bool
+    private function sendWhatsApp(User $user, string $message, ProjectTask $task, array $meta = []): bool
     {
+        $meta = $this->notificationMeta($meta);
+
         if (!$user->phone) {
             Log::warning("User {$user->name} tidak punya nomor WhatsApp");
+            $this->recordNotification($user, $task, $meta['title'] ?? 'WhatsApp Notification Failed', $message, 'whatsapp', 'failed', 'Nomor WhatsApp kosong.', $meta);
             return false;
         }
 
@@ -130,20 +172,12 @@ class NotificationService
 
             $success = $response->successful();
             
-            // Catat di database
-            Notification::create([
-                'user_id' => $user->id,
-                'project_task_id' => $task->id,
-                'title' => 'Task Notification',
-                'message' => $message,
-                'channel' => 'whatsapp',
-                'status' => $success ? 'sent' : 'failed',
-                'response_log' => $response->body(),
-            ]);
+            $this->recordNotification($user, $task, $meta['title'] ?? 'Task Notification', $message, 'whatsapp', $success ? 'sent' : 'failed', $response->body(), $meta);
 
             return $success;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             Log::error('WhatsApp error: ' . $e->getMessage());
+            $this->recordNotification($user, $task, $meta['title'] ?? 'WhatsApp Notification Failed', $message, 'whatsapp', 'failed', $e->getMessage(), $meta);
             return false;
         }
     }
@@ -151,31 +185,28 @@ class NotificationService
     /**
      * Kirim Email
      */
-    private function sendEmail(User $user, ProjectTask $task, bool $isReminder = false): bool
+    private function sendEmail(User $user, ProjectTask $task, bool $isReminder = false, ?string $message = null, array $meta = []): bool
     {
+        $meta = $this->notificationMeta($meta);
+
         try {
             $subject = $isReminder 
                 ? "Reminder: Task Deadline Mendekati - {$task->title}"
                 : "Task Baru Ditugaskan: {$task->title}";
+            $body = $message ?? $this->buildTaskMessage($task);
 
-            Mail::raw("Halo {$user->name},\n\n{$this->buildTaskMessage($task)}", function ($mail) use ($user, $subject) {
+            Mail::raw("Halo {$user->name},\n\n{$body}", function ($mail) use ($user, $subject) {
                 $mail->to($user->email)
                      ->subject($subject)
                      ->from(config('mail.from.address'), config('mail.from.name'));
             });
 
-            Notification::create([
-                'user_id' => $user->id,
-                'project_task_id' => $task->id,
-                'title' => $subject,
-                'message' => "Email sent to {$user->email}",
-                'channel' => 'email',
-                'status' => 'sent',
-            ]);
+            $this->recordNotification($user, $task, $subject, "Email sent to {$user->email}", 'email', 'sent', null, $meta);
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             Log::error('Email error: ' . $e->getMessage());
+            $this->recordNotification($user, $task, "Email Failed: {$task->title}", $message ?? $task->title, 'email', 'failed', $e->getMessage(), $meta);
             return false;
         }
     }
@@ -186,11 +217,11 @@ class NotificationService
     private function createCalendarEvent(User $user, ProjectTask $task): bool
     {
         try {
-            $calendarService = new \App\Services\GoogleCalendarService();
+            $calendarService = app(\App\Services\GoogleCalendarService::class);
 
             $projectName = $task->project->name ?? 'Proyek';
             $deadline    = $task->deadline ? $task->deadline->format('Y-m-d') : date('Y-m-d');
-            $title       = "[TASK] {$task->title} — {$projectName}";
+            $title       = "[TASK] {$task->title} - {$projectName}";
             $description = "Tugas: {$task->title}\nProyek: {$projectName}\nDitugaskan kepada: {$user->name}\nDeadline: {$task->deadline?->format('d/m/Y')}";
 
             // Buat event di kalender Admin & undang pegawai via email mereka
@@ -236,8 +267,56 @@ class NotificationService
      */
     private function updateCalendarEvent(User $user, ProjectTask $task, int $daysBefore): bool
     {
-        // TODO: Implementasi update Google Calendar
-        Log::info("Calendar event updated with {$daysBefore}-day reminder for task {$task->id}");
-        return true;
+        $meta = $this->notificationMeta([
+            'notification_type' => 'deadline_reminder',
+            'reminder_days_before' => $daysBefore,
+            'reminder_date' => now(config('app.timezone', 'Asia/Jakarta'))->toDateString(),
+        ]);
+
+        try {
+            $calendarService = app(\App\Services\GoogleCalendarService::class);
+            $projectName = $task->project->name ?? 'Proyek';
+            $title = "[REMINDER H-{$daysBefore}] {$task->title} - {$projectName}";
+            $date = now(config('app.timezone', 'Asia/Jakarta'))->toDateString();
+            $description = $this->buildReminderMessage($task, $daysBefore);
+            $result = $calendarService->createEvent($title, $date, $user->email, $description);
+            $success = ($result['status'] ?? null) === 'success';
+
+            $this->recordNotification(
+                $user,
+                $task,
+                "Calendar Reminder H-{$daysBefore}",
+                $success ? ('Event reminder dibuat. Link: ' . ($result['event_link'] ?? '-')) : ($result['message'] ?? 'Gagal'),
+                'calendar',
+                $success ? 'sent' : 'failed',
+                json_encode($result),
+                $meta
+            );
+
+            return $success;
+        } catch (Throwable $e) {
+            Log::error('Google Calendar reminder error: ' . $e->getMessage());
+            $this->recordNotification($user, $task, "Calendar Reminder H-{$daysBefore} Failed", $task->title, 'calendar', 'failed', $e->getMessage(), $meta);
+
+            return false;
+        }
+    }
+
+    private function recordNotification(User $user, ProjectTask $task, string $title, string $message, string $channel, string $status, ?string $responseLog = null, array $meta = []): Notification
+    {
+        $meta = $this->notificationMeta($meta);
+
+        return Notification::create([
+            'user_id' => $user->id,
+            'project_task_id' => $task->id,
+            'title' => $title,
+            'message' => $message,
+            'channel' => $channel,
+            'status' => $status,
+            'notification_type' => $meta['notification_type'],
+            'reminder_days_before' => $meta['reminder_days_before'],
+            'reminder_date' => $meta['reminder_date'],
+            'response_log' => $responseLog,
+        ]);
     }
 }
