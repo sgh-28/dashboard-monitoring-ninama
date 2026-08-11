@@ -43,7 +43,7 @@
             'label' => $end->translatedFormat('j M'),
             'left' => 100,
         ];
-    } elseif (end($markers)['left'] < 94) {
+    } elseif (end($markers)['left'] < 88) {
         $markers[] = [
             'label' => $end->translatedFormat('j M'),
             'left' => 100,
@@ -231,7 +231,7 @@
                                 @endif
                             </div>
 
-                            <div class="relative min-w-0 overflow-hidden" style="height:{{ $laneHeight }};">
+                            <div class="relative min-w-0 overflow-visible" style="height:{{ $laneHeight }};">
                                 @foreach($markers as $marker)
                                     <div
                                         class="absolute top-0 bottom-0 w-px"
