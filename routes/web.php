@@ -162,6 +162,8 @@ Route::middleware(['auth'])->group(function () {
     
     // ==================== ADMIN/DIREKTUR READ-ONLY MARKETING ROUTES ====================
     Route::middleware(['role:admin,direktur'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/projects', [AdminProjectController::class, 'index'])->name('projects.index');
+
         Route::prefix('marketing')->name('marketing.')->group(function () {
             Route::get('/', [AdminMarketingController::class, 'index'])->name('index');
             Route::get('/export', [AdminMarketingController::class, 'exportMarketing'])->name('export');
@@ -180,7 +182,6 @@ Route::middleware(['auth'])->group(function () {
             ->name('projects.divisions');
         
         Route::prefix('projects')->name('projects.')->group(function () {
-            Route::get('/', [AdminProjectController::class, 'index'])->name('index');
             Route::get('/create', [AdminProjectController::class, 'create'])->name('create');
             Route::post('/', [AdminProjectController::class, 'store'])->name('store');
             Route::get('/{project}', [AdminProjectController::class, 'show'])->name('show');
