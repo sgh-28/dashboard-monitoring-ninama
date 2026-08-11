@@ -146,8 +146,8 @@
 
     @if($items->isNotEmpty())
         <div class="overflow-x-auto px-6 py-6">
-            <div class="min-w-[1240px]">
-                <div class="grid gap-6" style="grid-template-columns:230px 170px minmax(560px,1fr) 210px;">
+            <div class="min-w-[1040px] w-full">
+                <div class="grid gap-4" style="grid-template-columns:minmax(210px,250px) minmax(210px,230px) minmax(360px,1fr) minmax(150px,170px);">
                     <div class="text-[14px]" style="color:#9fb0c7;">Milestone - {{ $timelinePeriod }}</div>
                     <div></div>
                     <div class="relative h-10">
@@ -215,7 +215,7 @@
                             $laneHeight = $hasLateLane ? '94px' : '64px';
                         @endphp
 
-                        <div class="grid gap-6 rounded-lg border px-5 py-5" style="grid-template-columns:230px 170px minmax(560px,1fr) 210px;background:#172235;border-color:#334155;">
+                        <div class="grid gap-4 rounded-lg border px-5 py-5" style="grid-template-columns:minmax(210px,250px) minmax(210px,230px) minmax(360px,1fr) minmax(150px,170px);background:#172235;border-color:#334155;">
                             <div>
                                 <p class="text-[18px] font-semibold leading-snug" style="color:#e8eef8;">{{ $item['title'] }}</p>
                                 <p class="mt-2 text-[14px] leading-relaxed" style="color:#9fb0c7;">
