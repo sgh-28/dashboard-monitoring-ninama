@@ -328,7 +328,7 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-gray-400 border-b border-gray-700">
@@ -407,6 +407,113 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <div class="md:hidden space-y-4">
+            @forelse($recentProjects ?? [] as $project)
+                @php
+                    $deadline = $project->deadline ? \Carbon\Carbon::parse($project->deadline) : null;
+                    $isOverdue = $deadline && $deadline->isPast() && $project->status !== 'done';
+                    $daysOverdue = $isOverdue ? (int) $deadline->copy()->startOfDay()->diffInDays(now()->startOfDay()) : 0;
+                @endphp
+
+                <div class="rounded-lg border {{ $isOverdue ? 'border-red-500/60 bg-red-950/20' : 'border-gray-700 bg-gray-900/30' }} p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-white leading-snug break-words">{{ $project->name }}</p>
+                            <p class="mt-1 text-xs text-gray-500">{{ $project->client_name ?? '-' }}</p>
+                        </div>
+                        <span class="shrink-0 px-2 py-1 text-xs rounded-full bg-blue-900/50 text-blue-300 border border-blue-500/30">
+                            {{ ucfirst($project->category) }}
+                        </span>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p class="text-xs text-gray-500">Status</p>
+                            @if($isOverdue)
+                                <span class="mt-1 inline-flex items-center rounded-full bg-red-900/50 px-2 py-1 text-xs font-medium text-red-300 border border-red-500/30">
+                                    Overdue
+                                </span>
+                            @else
+                                <span class="mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium
+                                    @if($project->status === 'done') bg-green-900/50 text-green-300
+                                    @elseif($project->status === 'ongoing') bg-yellow-900/50 text-yellow-300
+                                    @else bg-gray-700 text-gray-300 @endif">
+                                    {{ ucfirst(str_replace('_', ' ', $project->status)) }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-gray-500">Deadline</p>
+                            @if($deadline)
+                                <p class="mt-1 font-medium {{ $isOverdue ? 'text-red-300' : 'text-gray-200' }}">{{ $deadline->format('d/m/Y') }}</p>
+                                @if($isOverdue)
+                                    <p class="text-xs font-semibold text-red-400">+{{ $daysOverdue }} hari terlambat</p>
+                                @endif
+                            @else
+                                <p class="mt-1 text-gray-500">-</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="mb-1 flex items-center justify-between text-xs">
+                            <span class="text-gray-500">Progress</span>
+                            <span class="{{ $isOverdue ? 'text-red-400' : 'text-blue-300' }} font-semibold">{{ $project->progress ?? 0 }}%</span>
+                        </div>
+                        <div class="h-2 w-full rounded-full bg-gray-700">
+                            <div class="h-2 rounded-full {{ $isOverdue ? 'bg-red-500' : 'bg-blue-500' }}"
+                                 style="width: {{ $project->progress ?? 0 }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 rounded-lg border border-gray-700 bg-gray-800/60 p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs text-gray-500">SLA</p>
+                                <p class="font-semibold text-emerald-300">{{ $project->sla_percentage_formatted }}</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-400">
+                                <p>{{ $project->sla_status_text }}</p>
+                                <p>{{ $project->evaluated_tasks_count }}/{{ $project->total_tasks_count }} dinilai</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="rounded bg-gray-900/50 p-2">
+                                <p class="text-gray-500">Tepat</p>
+                                <p class="font-semibold text-emerald-300">{{ $project->on_time_tasks_count }}</p>
+                            </div>
+                            <div class="rounded bg-gray-900/50 p-2">
+                                <p class="text-gray-500">Telat</p>
+                                <p class="font-semibold text-amber-300">{{ $project->late_tasks_count }}</p>
+                            </div>
+                            <div class="rounded bg-gray-900/50 p-2">
+                                <p class="text-gray-500">Breached</p>
+                                <p class="font-semibold text-red-300">{{ $project->breached_tasks_count }}</p>
+                            </div>
+                        </div>
+
+                        @if($project->division_sla_summaries->isNotEmpty())
+                            <div class="mt-3 space-y-2 border-t border-gray-700 pt-3 text-xs">
+                                @foreach($project->division_sla_summaries->filter(fn($divisionSla) => is_array($divisionSla)) as $divisionSla)
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="min-w-0 text-gray-400 break-words">{{ $divisionSla['division_name'] ?? '-' }}</span>
+                                        <span class="shrink-0 font-medium text-emerald-300">
+                                            {{ ($divisionSla['sla_percentage'] ?? null) === null ? 'Belum tersedia' : \App\Models\ProjectTask::formatSlaPercentage($divisionSla['sla_percentage']) }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="rounded-lg border border-gray-700 bg-gray-900/30 p-6 text-center text-sm text-gray-500">
+                    {{ $currentCategory ? 'Tidak ada proyek aktif untuk kategori ini.' : 'Belum ada data proyek aktif.' }}
+                </div>
+            @endforelse
         </div>
     </div>
 </div>
