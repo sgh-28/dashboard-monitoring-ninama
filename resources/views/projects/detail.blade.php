@@ -3,7 +3,60 @@
 @section('title', 'Detail Proyek: ' . $project->name)
 
 @section('content')
-<div class="p-6">
+@push('styles')
+<style>
+    html:not(.dark) .project-detail-page .project-panel {
+        background: #eef2f7 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) .project-detail-page .project-panel-title,
+    html:not(.dark) .project-detail-page .project-table .primary-text {
+        color: #0f172a !important;
+    }
+
+    html:not(.dark) .project-detail-page .project-panel-subtitle,
+    html:not(.dark) .project-detail-page .project-table .secondary-text {
+        color: #334155 !important;
+    }
+
+    html:not(.dark) .project-detail-page .project-table {
+        color: #0f172a;
+    }
+
+    html:not(.dark) .project-detail-page .project-table thead {
+        background: #d8dee8 !important;
+        color: #1e293b !important;
+    }
+
+    html:not(.dark) .project-detail-page .project-table th {
+        color: #1e293b !important;
+        font-weight: 700;
+    }
+
+    html:not(.dark) .project-detail-page .project-table tbody {
+        background: #f3f6fa;
+    }
+
+    html:not(.dark) .project-detail-page .project-table tbody tr {
+        border-color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) .project-detail-page .project-table tbody tr:nth-child(even) {
+        background: #e8edf4;
+    }
+
+    html:not(.dark) .project-detail-page .project-table tbody tr:hover {
+        background: #dfe7f1 !important;
+    }
+
+    html:not(.dark) .project-detail-page .project-table tbody tr.is-late {
+        background: #eadde0 !important;
+    }
+</style>
+@endpush
+
+<div class="project-detail-page p-6">
     {{-- HEADER --}}
     <div class="mb-6 flex justify-between items-start">
         <div>
@@ -35,13 +88,13 @@
     @endisset
 
     {{-- TASKLIST READ ONLY UNTUK ADMIN / DIREKTUR --}}
-    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+    <div class="project-panel bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-                <h3 class="text-lg font-semibold text-white">Tasklist Proyek</h3>
-                <p class="text-sm text-gray-400">Read-only untuk monitoring status, keterlambatan, dan laporan pengerjaan pegawai.</p>
+                <h3 class="project-panel-title text-lg font-semibold text-white">Tasklist Proyek</h3>
+                <p class="project-panel-subtitle text-sm text-gray-400">Read-only untuk monitoring status, keterlambatan, dan laporan pengerjaan pegawai.</p>
             </div>
-            <span class="text-xs text-gray-400">
+            <span class="project-panel-subtitle text-xs text-gray-400">
                 {{ $project->tasks->where('status', 'done')->count() }}/{{ $project->tasks->count() }} task selesai
                 <span class="mx-2">|</span>
                 {{ $project->tasks->where('verification_status', 'approved')->count() }}/{{ $project->tasks->count() }} task disetujui PM
@@ -50,7 +103,7 @@
 
         @if($project->tasks->count() > 0)
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="project-table w-full text-sm">
                     <thead class="bg-gray-700/60 text-gray-300 uppercase text-xs">
                         <tr>
                             <th class="px-4 py-3 text-left">Task</th>
@@ -77,17 +130,17 @@
                                     ? (int) $deadline->diffInDays($finishDate ?? now()->startOfDay())
                                     : 0;
                             @endphp
-                            <tr class="hover:bg-gray-700/30 {{ $isLate ? 'bg-red-900/10' : '' }}">
+                            <tr class="hover:bg-gray-700/30 {{ $isLate ? 'is-late bg-red-900/10' : '' }}">
                                 <td class="px-4 py-3">
-                                    <p class="font-medium text-white">{{ $task->title }}</p>
+                                    <p class="primary-text font-medium text-white">{{ $task->title }}</p>
                                     @if($task->description)
-                                        <p class="text-xs text-gray-500 mt-1">{{ Str::limit($task->description, 70) }}</p>
+                                        <p class="secondary-text text-xs text-gray-500 mt-1">{{ Str::limit($task->description, 70) }}</p>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-gray-300">{{ $task->division?->name ?? '-' }}</td>
+                                <td class="secondary-text px-4 py-3 text-gray-300">{{ $task->division?->name ?? '-' }}</td>
                                 <td class="px-4 py-3">
-                                    <p class="text-gray-300">{{ $task->assignee?->name ?? '-' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $task->assignee?->jabatan ?? '' }}</p>
+                                    <p class="secondary-text text-gray-300">{{ $task->assignee?->name ?? '-' }}</p>
+                                    <p class="secondary-text text-xs text-gray-500">{{ $task->assignee?->jabatan ?? '' }}</p>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="px-2 py-1 text-xs rounded-full {{ $task->status_color }}">
@@ -115,15 +168,15 @@
                                         <p class="text-xs text-amber-400 mt-1">{{ $task->sla_evaluation_reason }}</p>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-gray-300">
+                                <td class="secondary-text px-4 py-3 text-gray-300">
                                     {{ $deadline ? $deadline->format('d/m/Y') : '-' }}
                                 </td>
                                 <td class="px-4 py-3">
                                     @if($task->status === 'done')
                                         @if($task->completion_notes)
-                                            <p class="text-gray-300">{{ Str::limit($task->completion_notes, 90) }}</p>
+                                            <p class="secondary-text text-gray-300">{{ Str::limit($task->completion_notes, 90) }}</p>
                                         @else
-                                            <p class="text-gray-500">Tidak ada keterangan.</p>
+                                            <p class="secondary-text text-gray-500">Tidak ada keterangan.</p>
                                         @endif
                                         @if($task->proof_image)
                                             <a href="{{ asset('storage/' . $task->proof_image) }}" target="_blank" class="inline-flex mt-2 text-xs text-blue-400 hover:underline">

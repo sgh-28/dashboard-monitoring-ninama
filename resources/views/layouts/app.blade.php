@@ -8,6 +8,7 @@
     <link rel="shortcut icon" type="image/png" href="{{ asset('images/logo-ninama.png') }}">
     <title>@yield('title', 'Business Dashboard - Ninama')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 
     <script>
         (function() {
