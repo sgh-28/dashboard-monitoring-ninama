@@ -147,7 +147,7 @@
                                         {{ $task->status_label }}
                                     </span>
                                     @if($isLate)
-                                        <p class="text-xs text-red-400 mt-2">Terlambat {{ $lateDays }} hari</p>
+                                        <p class="text-xs text-red-400 mt-2">Terlambat {{ \App\Models\ProjectTask::formatDurationFromDays($lateDays) }}</p>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">

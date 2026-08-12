@@ -175,7 +175,7 @@
                 @foreach($alerts as $alert)
                     <p>
                         <span class="font-semibold">{{ $alert['division'] }}</span> - {{ $alert['task'] }}
-                        terlambat {{ $alert['delay_days'] }} hari.
+                        terlambat {{ \App\Models\ProjectTask::formatDurationFromDays((int) $alert['delay_days']) }}.
                     </p>
                 @endforeach
             </div>
@@ -232,7 +232,7 @@
                                 $diffDays = (int) $actualRowEnd->diffInDays($plannedEnd, false);
 
                                 if ($diffDays > 0) {
-                                    $diffText = $diffDays . ' hari lebih cepat';
+                                    $diffText = \App\Models\ProjectTask::formatDurationFromDays($diffDays) . ' lebih cepat';
                                     $diffSubText = 'Sesuai rencana';
                                     $diffColor = '#e8eef8';
                                 } elseif ($diffDays === 0) {
@@ -240,12 +240,12 @@
                                     $diffSubText = 'Sesuai rencana';
                                     $diffColor = '#e8eef8';
                                 } else {
-                                    $diffText = abs($diffDays) . ' hari terlambat';
+                                    $diffText = \App\Models\ProjectTask::formatDurationFromDays(abs($diffDays)) . ' terlambat';
                                     $diffSubText = 'Melewati rencana';
                                     $diffColor = '#f05d67';
                                 }
                             } elseif ($item['is_delayed']) {
-                                $diffText = $item['delay_days'] . ' hari terlambat';
+                                $diffText = \App\Models\ProjectTask::formatDurationFromDays((int) $item['delay_days']) . ' terlambat';
                                 $diffSubText = 'Belum selesai';
                                 $diffColor = '#f05d67';
                             }

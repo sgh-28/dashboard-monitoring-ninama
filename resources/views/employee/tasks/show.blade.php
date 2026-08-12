@@ -48,7 +48,7 @@
                 <p class="text-white font-medium {{ $isOverdue ? 'text-red-400' : ($isDueSoon ? 'text-orange-400' : '') }}">
                     @if($deadline)
                         {{ $deadline->format('d F Y') }}
-                        @if($isOverdue) <span class="text-xs block">(+{{ abs(now()->diffInDays($deadline, false)) }} hari terlambat)</span>
+                        @if($isOverdue) <span class="text-xs block">(+{{ \App\Models\ProjectTask::formatDurationFromDays(abs(now()->diffInDays($deadline, false))) }} terlambat)</span>
                         @elseif($isDueSoon) <span class="text-xs block">(H-{{ now()->diffInDays($deadline, false) }})</span>
                         @endif
                     @else

@@ -341,6 +341,35 @@ class ProjectTask extends Model
         return $formatted . '%';
     }
 
+    public static function formatDurationFromDays(int $days): string
+    {
+        $days = max(0, $days);
+
+        if ($days < 30) {
+            return $days . ' hari';
+        }
+
+        $years = intdiv($days, 365);
+        $remainingDays = $days % 365;
+        $months = intdiv($remainingDays, 30);
+        $remainingDays = $remainingDays % 30;
+        $parts = [];
+
+        if ($years > 0) {
+            $parts[] = $years . ' tahun';
+        }
+
+        if ($months > 0) {
+            $parts[] = $months . ' bulan';
+        }
+
+        if ($remainingDays > 0 || empty($parts)) {
+            $parts[] = $remainingDays . ' hari';
+        }
+
+        return implode(' ', $parts);
+    }
+
     /**
      * Get the number of days until deadline (negative if overdue).
      */

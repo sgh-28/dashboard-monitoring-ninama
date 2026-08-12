@@ -178,7 +178,7 @@
                                         {{ $deadline->format('d/m/Y') }}
                                     </p>
                                     @if($isOverdue)
-                                        <p class="text-xs text-red-400">+{{ abs($daysLeft) }} hari terlambat</p>
+                                        <p class="text-xs text-red-400">+{{ \App\Models\ProjectTask::formatDurationFromDays(abs($daysLeft)) }} terlambat</p>
                                     @elseif($isDueSoon)
                                         <p class="text-xs text-orange-400">H-{{ $daysLeft }}</p>
                                     @endif
