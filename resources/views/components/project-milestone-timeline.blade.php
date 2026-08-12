@@ -100,16 +100,54 @@
         : $start->translatedFormat('F') . '-' . $end->translatedFormat('F Y');
 @endphp
 
+<style>
+    html:not(.dark) .milestone-timeline {
+        background: #eef2f7 !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+    }
+
+    html:not(.dark) .milestone-timeline .milestone-header {
+        border-color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) .milestone-timeline :where(h3, p, span, div) {
+        color: #0f172a !important;
+    }
+
+    html:not(.dark) .milestone-timeline .milestone-muted,
+    html:not(.dark) .milestone-timeline .axis-label {
+        color: #334155 !important;
+    }
+
+    html:not(.dark) .milestone-timeline .milestone-row {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) .milestone-timeline .milestone-row:nth-child(even) {
+        background: #e8edf4 !important;
+    }
+
+    html:not(.dark) .milestone-timeline .milestone-track {
+        background: #d6dde8 !important;
+    }
+
+    html:not(.dark) .milestone-timeline .milestone-grid-line {
+        background: #cbd5e1 !important;
+    }
+</style>
+
 <section
-    class="w-full overflow-hidden rounded-lg border"
+    class="milestone-timeline w-full overflow-hidden rounded-lg border"
     style="background:#0f1727;border-color:#334155;color:#e8eef8;font-family:Inter, Arial, sans-serif;"
 >
-    <div class="flex flex-col gap-5 border-b px-6 py-5 lg:flex-row lg:items-start lg:justify-between" style="border-color:#334155;">
+    <div class="milestone-header flex flex-col gap-5 border-b px-6 py-5 lg:flex-row lg:items-start lg:justify-between" style="border-color:#334155;">
         <div>
             <h3 class="text-[21px] font-semibold leading-tight" style="color:#e8eef8;">
                 Timeline Milestone &mdash; Rencana vs Realisasi
             </h3>
-            <p class="mt-2 text-[14px] leading-relaxed" style="color:#9fb0c7;">
+            <p class="milestone-muted mt-2 text-[14px] leading-relaxed" style="color:#9fb0c7;">
                 Rencana dan realisasi dipisahkan agar durasi serta selisih penyelesaian dapat dibandingkan dengan cepat.
             </p>
         </div>
@@ -148,13 +186,13 @@
         <div class="overflow-x-auto px-6 py-6">
             <div class="min-w-[1040px] w-full">
                 <div class="grid gap-4" style="grid-template-columns:minmax(210px,250px) minmax(210px,230px) minmax(360px,1fr) minmax(150px,170px);">
-                    <div class="text-[14px]" style="color:#9fb0c7;">Milestone - {{ $timelinePeriod }}</div>
+                    <div class="milestone-muted text-[14px]" style="color:#9fb0c7;">Milestone - {{ $timelinePeriod }}</div>
                     <div></div>
                     <div class="relative h-10">
                         <div class="absolute left-0 right-0 top-8 h-px" style="background:#43526a;"></div>
                         @foreach($markers as $marker)
                             <span
-                                class="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[14px]"
+                                class="axis-label absolute top-0 -translate-x-1/2 whitespace-nowrap text-[14px]"
                                 style="left:{{ $marker['left'] }}%;color:#9fb0c7;"
                             >
                                 {{ $marker['label'] }}
@@ -215,10 +253,10 @@
                             $laneHeight = $hasLateLane ? '94px' : '64px';
                         @endphp
 
-                        <div class="grid gap-4 rounded-lg border px-5 py-5" style="grid-template-columns:minmax(210px,250px) minmax(210px,230px) minmax(360px,1fr) minmax(150px,170px);background:#172235;border-color:#334155;">
+                        <div class="milestone-row grid gap-4 rounded-lg border px-5 py-5" style="grid-template-columns:minmax(210px,250px) minmax(210px,230px) minmax(360px,1fr) minmax(150px,170px);background:#172235;border-color:#334155;">
                             <div>
                                 <p class="text-[18px] font-semibold leading-snug" style="color:#e8eef8;">{{ $item['title'] }}</p>
-                                <p class="mt-2 text-[14px] leading-relaxed" style="color:#9fb0c7;">
+                                <p class="milestone-muted mt-2 text-[14px] leading-relaxed" style="color:#9fb0c7;">
                                     {{ $item['division'] }} &middot; {{ $item['status_label'] }}
                                 </p>
                             </div>
@@ -234,12 +272,12 @@
                             <div class="relative min-w-0 overflow-visible" style="height:{{ $laneHeight }};">
                                 @foreach($markers as $marker)
                                     <div
-                                        class="absolute top-0 bottom-0 w-px"
+                                        class="milestone-grid-line absolute top-0 bottom-0 w-px"
                                         style="left:{{ $marker['left'] }}%;background:#2d3a4e;"
                                     ></div>
                                 @endforeach
 
-                                <div class="absolute left-0 right-0 rounded-full" style="top:4px;height:16px;background:#263348;"></div>
+                                <div class="milestone-track absolute left-0 right-0 rounded-full" style="top:4px;height:16px;background:#263348;"></div>
                                 <div
                                     class="absolute rounded-full shadow-sm"
                                     style="top:4px;height:16px;left:{{ $plannedBar['left'] }}%;width:{{ $plannedBar['width'] }}%;background:#4f8cff;"
@@ -247,7 +285,7 @@
                                 <div class="absolute rounded-full border" style="top:2px;height:20px;width:8px;left:calc({{ $plannedBar['left'] }}% - 4px);border-color:#4f8cff;background:#172235;"></div>
                                 <div class="absolute rounded-full border" style="top:2px;height:20px;width:8px;left:calc({{ $plannedBar['left'] + $plannedBar['width'] }}% - 4px);border-color:#4f8cff;background:#172235;"></div>
 
-                                <div class="absolute left-0 right-0 rounded-full" style="top:36px;height:16px;background:#263348;"></div>
+                                <div class="milestone-track absolute left-0 right-0 rounded-full" style="top:36px;height:16px;background:#263348;"></div>
                                 @if($actualBar)
                                     <div
                                         class="absolute rounded-full shadow-sm"
@@ -258,7 +296,7 @@
                                 @endif
 
                                 @if($hasLateLane && $lateBar)
-                                    <div class="absolute left-0 right-0 rounded-full" style="top:68px;height:16px;background:#263348;"></div>
+                                    <div class="milestone-track absolute left-0 right-0 rounded-full" style="top:68px;height:16px;background:#263348;"></div>
                                     <div
                                         class="absolute rounded-full shadow-sm"
                                         style="top:68px;height:16px;left:{{ $lateBar['left'] }}%;width:{{ $lateBar['width'] }}%;background:#f05d67;"
@@ -270,7 +308,7 @@
 
                             <div class="self-center text-right">
                                 <p class="text-[16px] font-semibold leading-snug" style="color:{{ $diffColor }};">{{ $diffText }}</p>
-                                <p class="mt-2 text-[14px]" style="color:#9fb0c7;">{{ $diffSubText }}</p>
+                                <p class="milestone-muted mt-2 text-[14px]" style="color:#9fb0c7;">{{ $diffSubText }}</p>
                             </div>
                         </div>
                     @endforeach
