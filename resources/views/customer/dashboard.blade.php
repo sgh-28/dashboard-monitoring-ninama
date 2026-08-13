@@ -40,6 +40,19 @@
             @if(isset($projects) && $projects->count() > 0)
                 <div class="space-y-6">
                     @foreach($projects as $project)
+                    @php
+                        $allProjectTasks = $project->tasks->isNotEmpty()
+                            ? $project->tasks
+                            : $project->divisions->flatMap->tasks;
+                        $allTasksDone = $allProjectTasks->isNotEmpty() && $allProjectTasks->every(fn($task) => $task->status === 'done');
+                        $ratingLabels = [
+                            1 => 'Sangat Tidak Puas',
+                            2 => 'Tidak Puas',
+                            3 => 'Cukup Puas',
+                            4 => 'Puas',
+                            5 => 'Sangat Puas',
+                        ];
+                    @endphp
                     <div class="bg-gray-700/50 rounded-lg p-5 border border-gray-600 hover:border-blue-500 transition">
                         {{-- Header Proyek --}}
                         <div class="flex justify-between items-start mb-4">
@@ -157,6 +170,95 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                        @endif
+
+                        @if($project->status === 'done' && $allTasksDone)
+                        <div class="mt-5 rounded-lg border border-blue-500/40 bg-gray-800/60 p-5">
+                            <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <h4 class="text-lg font-semibold text-white">Feedback Customer</h4>
+                                    <p class="text-sm text-gray-400">
+                                        Berikan penilaian setelah seluruh pekerjaan proyek selesai.
+                                    </p>
+                                </div>
+                                @if($project->customer_feedback_submitted_at)
+                                    <span class="mt-2 inline-flex w-fit rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-300 sm:mt-0">
+                                        Sudah dikirim
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if($project->customer_feedback_submitted_at)
+                                <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_280px]">
+                                    <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                                        <p class="text-sm text-gray-400">Bagaimana pendapat Anda mengenai hasil pengerjaan proyek yang telah diselesaikan?</p>
+                                        <p class="mt-2 whitespace-pre-line text-gray-200">{{ $project->customer_feedback }}</p>
+                                    </div>
+                                    <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                                        <p class="text-sm text-gray-400">Tingkat kepuasan</p>
+                                        <p class="mt-2 text-lg font-semibold text-yellow-300">
+                                            {!! str_repeat('&#9733;', (int) $project->customer_satisfaction_rating) !!}
+                                        </p>
+                                        <p class="text-sm text-gray-300">{{ $ratingLabels[(int) $project->customer_satisfaction_rating] ?? '-' }}</p>
+                                        <p class="mt-2 text-xs text-gray-500">
+                                            Dikirim pada {{ $project->customer_feedback_submitted_at->format('d/m/Y H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            @else
+                                <form method="POST" action="{{ route('customer.projects.feedback.store', $project) }}" class="mt-4 space-y-5">
+                                    @csrf
+
+                                    <div>
+                                        <label for="customer_feedback_{{ $project->id }}" class="block text-sm font-medium text-gray-300">
+                                            Bagaimana pendapat Anda mengenai hasil pengerjaan proyek yang telah diselesaikan?
+                                        </label>
+                                        <textarea
+                                            id="customer_feedback_{{ $project->id }}"
+                                            name="customer_feedback"
+                                            rows="4"
+                                            required
+                                            class="mt-2 w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-3 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Tuliskan keterangan atau review Anda..."
+                                        >{{ old('customer_feedback') }}</textarea>
+                                        @error('customer_feedback')
+                                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <p class="block text-sm font-medium text-gray-300">
+                                            Bagaimana tingkat kepuasan Anda terhadap hasil pengerjaan proyek ini?
+                                        </p>
+                                        <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                                            @foreach($ratingLabels as $rating => $label)
+                                                <label class="cursor-pointer rounded-lg border border-gray-700 bg-gray-900/40 p-3 transition hover:border-yellow-400/60">
+                                                    <input
+                                                        type="radio"
+                                                        name="customer_satisfaction_rating"
+                                                        value="{{ $rating }}"
+                                                        class="sr-only peer"
+                                                        required
+                                                        {{ (string) old('customer_satisfaction_rating') === (string) $rating ? 'checked' : '' }}
+                                                    >
+                                                    <span class="block rounded-md p-2 text-center peer-checked:bg-yellow-500/15 peer-checked:ring-2 peer-checked:ring-yellow-400">
+                                                        <span class="block text-lg text-yellow-300">{!! str_repeat('&#9733;', $rating) !!}</span>
+                                                        <span class="mt-1 block text-xs text-gray-300">{{ $label }}</span>
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                        @error('customer_satisfaction_rating')
+                                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <button type="submit" class="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700">
+                                        Simpan Feedback
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                         @endif
                     </div>
