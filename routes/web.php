@@ -157,6 +157,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [CustomerController::class, 'index'])->name('dashboard');
         Route::get('/projects', [CustomerController::class, 'projects'])->name('projects');
         Route::get('/projects/{project}', [CustomerController::class, 'showProject'])->name('projects.show');
+        Route::post('/projects/{project}/feedback', [CustomerController::class, 'storeFeedback'])->name('projects.feedback.store');
         Route::get('/category/{category}', [CustomerController::class, 'show'])->name('category');
     });
     

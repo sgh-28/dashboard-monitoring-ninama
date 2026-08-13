@@ -28,6 +28,9 @@ class Project extends Model
         'status_text',
         'completed_by',
         'completed_at',
+        'customer_feedback',
+        'customer_satisfaction_rating',
+        'customer_feedback_submitted_at',
     ];
 
     protected $casts = [
@@ -35,6 +38,7 @@ class Project extends Model
         'end_date' => 'date',
         'deadline' => 'date',
         'completed_at' => 'datetime',
+        'customer_feedback_submitted_at' => 'datetime',
         'progress' => 'float',
         'sla' => 'integer',
     ];

@@ -87,6 +87,44 @@
         </div>
     @endisset
 
+    @php
+        $userRole = Auth::user()?->role?->name ?? '';
+        $ratingLabels = [
+            1 => 'Sangat Tidak Puas',
+            2 => 'Tidak Puas',
+            3 => 'Cukup Puas',
+            4 => 'Puas',
+            5 => 'Sangat Puas',
+        ];
+    @endphp
+
+    @if($userRole === 'direktur' && $project->status === 'done' && $project->customer_feedback_submitted_at)
+        <div class="project-panel mb-6 rounded-lg border border-gray-700 bg-gray-800 p-6">
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <h3 class="project-panel-title text-lg font-semibold text-white">Feedback Customer</h3>
+                    <p class="project-panel-subtitle mt-1 text-sm text-gray-400">
+                        Review customer setelah proyek dinyatakan selesai.
+                    </p>
+                </div>
+                <div class="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-right">
+                    <p class="text-lg font-semibold text-yellow-300">{{ str_repeat('⭐', (int) $project->customer_satisfaction_rating) }}</p>
+                    <p class="mt-1 text-sm text-gray-300">{{ $ratingLabels[(int) $project->customer_satisfaction_rating] ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="mt-5 rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                <p class="text-sm text-gray-400">
+                    Bagaimana pendapat Anda mengenai hasil pengerjaan proyek yang telah diselesaikan?
+                </p>
+                <p class="mt-3 whitespace-pre-line text-gray-200">{{ $project->customer_feedback }}</p>
+                <p class="mt-4 text-xs text-gray-500">
+                    Dikirim pada {{ $project->customer_feedback_submitted_at->format('d/m/Y H:i') }}
+                </p>
+            </div>
+        </div>
+    @endif
+
     {{-- TASKLIST READ ONLY UNTUK ADMIN / DIREKTUR --}}
     <div class="project-panel bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
