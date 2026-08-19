@@ -9,6 +9,11 @@
         <p class="text-gray-400">Perbarui informasi proyek</p>
     </div>
 
+    @php
+        $projectStartDate = old('start_date', $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('Y-m-d') : '');
+        $projectDeadline = old('deadline', $project->deadline ? \Carbon\Carbon::parse($project->deadline)->format('Y-m-d') : '');
+    @endphp
+
     <form action="{{ route('admin.projects.update', $project) }}" method="POST" class="bg-gray-800 rounded-lg p-6 border border-gray-700 space-y-6">
         @csrf @method('PUT')
 
@@ -49,11 +54,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Tanggal Mulai</label>
-                <input type="date" name="start_date" value="{{ old('start_date', $project->start_date?->format('Y-m-d')) }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                <input type="date" name="start_date" value="{{ $projectStartDate }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
             </div>
             <div>
                 <label class="block text-sm text-gray-400 mb-1">Deadline</label>
-                <input type="date" name="deadline" value="{{ old('deadline', $project->deadline?->format('Y-m-d')) }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                <input type="date" name="deadline" value="{{ $projectDeadline }}" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
             </div>
         </div>
 
@@ -82,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadDivisions(category) {
         divisionsContainer.innerHTML = '<p class="text-gray-400 text-sm col-span-full">Memuat divisi...</p>';
         
-        fetch(`{{ route('admin.projects.divisions', '') }}/${category}`)
+        fetch(`/admin/projects/divisions/${encodeURIComponent(category)}`)
             .then(response => response.json())
             .then(divisions => {
                 divisionsContainer.innerHTML = '';
