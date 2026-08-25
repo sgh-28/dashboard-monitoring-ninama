@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\ProjectDivision;
+use App\Models\MarketingOffer;
 use App\Services\MilestoneService;
 use App\Services\ProjectProgressService;
 use Illuminate\Http\Request;
@@ -83,6 +84,7 @@ class AdminProjectController extends Controller
             'sla' => 'nullable|integer|min:0|max:100',
             'divisions' => 'nullable|array',
             'divisions.*' => 'string|max:100',
+            'marketing_offer_id' => 'nullable|exists:marketing_offers,id',
         ]);
 
         $customer = null;
@@ -142,6 +144,13 @@ class AdminProjectController extends Controller
         }
 
         // ✅ KIRIM NOTIFIKASI JIKA CUSTOMER BARU DIBUAT
+        if ($request->filled('marketing_offer_id')) {
+            MarketingOffer::whereKey($request->marketing_offer_id)
+                ->where('status', 'deal')
+                ->whereNull('project_id')
+                ->update(['project_id' => $project->id]);
+        }
+
         if ($request->filled('new_customer_company') && $plainPassword) {
             $this->sendCustomerNotification($customer, $project, $plainPassword);
         }

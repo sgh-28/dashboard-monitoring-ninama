@@ -81,14 +81,79 @@ class MarketingOffer extends Model
     public function needsCustomerAccount(): bool
     {
         return $this->status === 'deal'
-            && !$this->project_id
+            && !$this->hasProjectCreated()
             && !$this->hasCustomerAccount();
+    }
+
+    public function hasProjectCreated(): bool
+    {
+        if ($this->project_id) {
+            return true;
+        }
+
+        $customerIds = User::whereHas('role', fn($q) => $q->where('name', 'customer'))
+            ->where(function ($q) {
+                if ($this->contact_email) {
+                    $q->orWhere('email', $this->contact_email);
+                }
+
+                if ($this->contact_phone) {
+                    $q->orWhere('phone', $this->contact_phone);
+                }
+
+                if ($this->company_name) {
+                    $q->orWhere('company', $this->company_name)
+                        ->orWhere('name', $this->company_name);
+                }
+            })
+            ->pluck('id');
+
+        if ($customerIds->isEmpty()) {
+            return false;
+        }
+
+        $projectNameCandidates = collect([
+            $this->offer_description,
+            $this->company_name,
+        ])
+            ->filter()
+            ->map(fn($value) => $this->normalizeProjectMatchText($value))
+            ->unique();
+
+        if ($projectNameCandidates->isEmpty()) {
+            return false;
+        }
+
+        return Project::whereIn('customer_id', $customerIds)
+            ->where('category', $this->category)
+            ->get(['name'])
+            ->contains(fn(Project $project) => $projectNameCandidates->contains(
+                fn(string $candidate) => $this->projectNamesMatch($candidate, $project->name)
+            ));
     }
 
     public function needsAdminDealFollowUp(): bool
     {
         return $this->status === 'deal'
-            && !$this->project_id;
+            && !$this->hasProjectCreated();
+    }
+
+    private function normalizeProjectMatchText(?string $value): string
+    {
+        return preg_replace('/\s+/', ' ', strtolower(trim((string) $value)));
+    }
+
+    private function projectNamesMatch(string $candidate, ?string $projectName): bool
+    {
+        $projectName = $this->normalizeProjectMatchText($projectName);
+
+        if ($candidate === '' || $projectName === '') {
+            return false;
+        }
+
+        return $candidate === $projectName
+            || (strlen($candidate) >= 12 && str_contains($projectName, $candidate))
+            || (strlen($projectName) >= 12 && str_contains($candidate, $projectName));
     }
 
     /**

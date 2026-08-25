@@ -107,6 +107,7 @@
                             $needsDealFollowUp = $offer->needsAdminDealFollowUp();
                             $isAdmin = (Auth::user()?->role?->name ?? '') === 'admin';
                             $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
+                                . "ID Penawaran: {$offer->id}\n"
                                 . "Nama Perusahaan: {$offer->company_name}\n"
                                 . "Nama Customer/Kontak: " . ($offer->contact_person ?: '-') . "\n"
                                 . "Jabatan: " . ($offer->contact_position ?: '-') . "\n"

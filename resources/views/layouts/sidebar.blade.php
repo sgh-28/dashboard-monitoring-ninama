@@ -27,7 +27,8 @@
 
             if ($userRole === 'admin') {
                 $marketingNeedsAccountCount = \App\Models\MarketingOffer::where('status', 'deal')
-                    ->whereNull('project_id')
+                    ->get()
+                    ->filter(fn($offer) => $offer->needsAdminDealFollowUp())
                     ->count();
             }
         @endphp

@@ -13,6 +13,7 @@
 
     <form action="{{ route('admin.projects.store') }}" method="POST" class="bg-gray-800 rounded-lg p-6 border border-gray-700 space-y-6">
         @csrf
+        <input type="hidden" name="marketing_offer_id" value="{{ old('marketing_offer_id') }}">
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {{-- LEFT COLUMN: Customer Information --}}
@@ -277,6 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setField('new_customer_phone', data['nomor hp'] || '');
         setField('new_customer_password', '');
         setField('new_customer_password_confirmation', '');
+        setField('marketing_offer_id', data['id penawaran'] || '');
 
         setField('name', data['nama project'] || data['nama perusahaan'] || '');
         setField('category', normalizeCategory(data['bidang']));
