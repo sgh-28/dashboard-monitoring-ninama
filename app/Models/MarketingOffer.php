@@ -85,6 +85,12 @@ class MarketingOffer extends Model
             && !$this->hasCustomerAccount();
     }
 
+    public function needsAdminDealFollowUp(): bool
+    {
+        return $this->status === 'deal'
+            && !$this->project_id;
+    }
+
     /**
      * Scope untuk filter berdasarkan kategori
      */

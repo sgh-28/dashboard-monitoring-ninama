@@ -28,7 +28,7 @@
             <p class="text-2xl font-bold text-green-400">{{ $stats['deal'] }}</p>
         </div>
         <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
-            <p class="text-sm text-gray-400">Perlu Akun</p>
+            <p class="text-sm text-gray-400">Perlu Diproses</p>
             <p class="text-2xl font-bold text-amber-400">{{ $stats['needs_account'] }}</p>
         </div>
         <div class="bg-gray-800 rounded-lg border border-gray-700 p-4">
@@ -104,6 +104,7 @@
                                 'no_response' => 'bg-red-900/50 text-red-300',
                             ];
                             $needsAccount = $offer->needsCustomerAccount();
+                            $needsDealFollowUp = $offer->needsAdminDealFollowUp();
                             $isAdmin = (Auth::user()?->role?->name ?? '') === 'admin';
                             $copyText = "DATA CUSTOMER DARI PENAWARAN MARKETING\n"
                                 . "Nama Perusahaan: {$offer->company_name}\n"
@@ -149,6 +150,10 @@
                                     <p class="mt-2 text-xs text-amber-300 bg-amber-900/30 border border-amber-500/30 rounded px-2 py-1 w-fit">
                                         Perlu dibuatkan akun customer
                                     </p>
+                                @elseif($needsDealFollowUp)
+                                    <p class="mt-2 text-xs text-blue-300 bg-blue-900/30 border border-blue-500/30 rounded px-2 py-1 w-fit">
+                                        Perlu dibuatkan project
+                                    </p>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-gray-300">
@@ -167,7 +172,7 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex flex-col items-end gap-2">
-                                @if($isAdmin && $needsAccount)
+                                @if($isAdmin && $needsDealFollowUp)
                                     <button type="button"
                                             class="copy-offer-btn inline-flex items-center justify-center rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-emerald-700"
                                             data-copy="{{ e($copyText) }}">

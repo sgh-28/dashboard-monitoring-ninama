@@ -28,8 +28,6 @@
             if ($userRole === 'admin') {
                 $marketingNeedsAccountCount = \App\Models\MarketingOffer::where('status', 'deal')
                     ->whereNull('project_id')
-                    ->get()
-                    ->filter(fn($offer) => $offer->needsCustomerAccount())
                     ->count();
             }
         @endphp
@@ -132,7 +130,7 @@
             </svg>
             <span class="flex-1">Laporan Marketing</span>
             @if(($userRole ?? '') === 'admin' && $marketingNeedsAccountCount > 0)
-                <span title="{{ $marketingNeedsAccountCount }} penawaran perlu dibuatkan akun customer"
+                <span title="{{ $marketingNeedsAccountCount }} penawaran deal belum dibuat project"
                       class="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-white/80 bg-amber-500 px-1.5 text-xs font-bold text-white shadow-sm">
                     {{ $marketingNeedsAccountCount }}
                 </span>

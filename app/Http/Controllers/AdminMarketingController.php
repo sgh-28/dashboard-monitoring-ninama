@@ -48,8 +48,6 @@ class AdminMarketingController extends Controller
             'rejected' => MarketingOffer::whereIn('status', ['rejected', 'no_response'])->count(),
             'needs_account' => MarketingOffer::where('status', 'deal')
                 ->whereNull('project_id')
-                ->get()
-                ->filter(fn($offer) => $offer->needsCustomerAccount())
                 ->count(),
         ];
 
