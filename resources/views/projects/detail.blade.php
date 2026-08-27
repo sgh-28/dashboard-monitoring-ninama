@@ -313,40 +313,84 @@
             <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 class="text-lg font-semibold text-white mb-6">🚀 Project Timeline</h3>
                 
-                @if($project->phases->count() > 0)
+                @php
+                    $projectTasks = $project->tasks ?? collect();
+                    $totalProjectTasks = $projectTasks->count();
+                    $doneProjectTasks = $projectTasks->where('status', 'done')->count();
+                    $approvedProjectTasks = $projectTasks->where('verification_status', 'approved')->count();
+                    $testingTasks = $projectTasks->filter(function ($task) {
+                        $divisionName = strtolower((string) optional($task->division)->name);
+
+                        return str_contains($divisionName, 'testing') || str_contains($divisionName, 'test');
+                    });
+                    $testingDoneTasks = $testingTasks->where('status', 'done')->count();
+                    $hasCustomerAccount = filled($project->customer_id);
+                    $hasStartedWork = $projectTasks->contains(fn($task) => in_array($task->status, ['ongoing', 'in_progress', 'done', 'completed'], true));
+                    $allTasksDone = $totalProjectTasks > 0 && $doneProjectTasks === $totalProjectTasks;
+                    $allTasksApproved = $totalProjectTasks > 0 && $approvedProjectTasks === $totalProjectTasks;
+                    $testingReached = $testingTasks->isEmpty()
+                        ? $hasStartedWork
+                        : $testingTasks->contains(fn($task) => in_array($task->status, ['ongoing', 'in_progress', 'done', 'completed'], true));
+                    $testingComplete = $testingTasks->isEmpty()
+                        ? $allTasksDone
+                        : $testingDoneTasks === $testingTasks->count();
+                    $workflowSteps = [
+                        [
+                            'label' => 'Akun Customer',
+                            'status' => $hasCustomerAccount ? 'completed' : 'pending',
+                            'caption' => $hasCustomerAccount ? 'Selesai' : 'Menunggu',
+                        ],
+                        [
+                            'label' => 'Pengerjaan Task',
+                            'status' => $allTasksDone ? 'completed' : ($hasStartedWork ? 'ongoing' : 'pending'),
+                            'caption' => $allTasksDone ? 'Selesai' : ($hasStartedWork ? 'Berjalan' : 'Menunggu'),
+                        ],
+                        [
+                            'label' => 'Verifikasi PM',
+                            'status' => $allTasksApproved ? 'completed' : ($approvedProjectTasks > 0 ? 'ongoing' : 'pending'),
+                            'caption' => $allTasksApproved ? 'Selesai' : "{$approvedProjectTasks}/{$totalProjectTasks} disetujui",
+                        ],
+                        [
+                            'label' => 'Testing',
+                            'status' => $testingComplete ? 'completed' : ($testingReached ? 'ongoing' : 'pending'),
+                            'caption' => $testingComplete ? 'Selesai' : ($testingReached ? 'Berjalan' : 'Menunggu'),
+                        ],
+                        [
+                            'label' => 'Proyek Selesai',
+                            'status' => $project->status === 'done' ? 'completed' : 'pending',
+                            'caption' => $project->status === 'done' ? 'Selesai' : 'Menunggu',
+                        ],
+                    ];
+                    $reachedSteps = collect($workflowSteps)->filter(fn($step) => in_array($step['status'], ['completed', 'ongoing'], true))->count();
+                    $timelineFill = count($workflowSteps) > 1
+                        ? max(0, min(100, (($reachedSteps - 1) / (count($workflowSteps) - 1)) * 100))
+                        : 0;
+                @endphp
+
+                @if(count($workflowSteps) > 0)
                 <div class="relative">
                     {{-- Garis Penghubung --}}
                     <div class="absolute top-5 left-0 w-full h-1 bg-gray-700 rounded"></div>
                     <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-green-500 via-blue-500 to-gray-600 rounded transition-all" 
-                         style="width: {{ $overallProgress }}%"></div>
+                         style="width: {{ $timelineFill }}%"></div>
                     
                     {{-- Langkah-langkah --}}
                     <div class="relative grid grid-cols-5 gap-2">
-                        @foreach($project->phases as $phase)
+                        @foreach($workflowSteps as $index => $step)
                         <div class="text-center">
                             {{-- Icon --}}
                             <div class="w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 border-2 z-10 relative
-                                @if($phase->status === 'completed') bg-green-500 border-green-500 text-white
-                                @elseif($phase->status === 'ongoing') bg-blue-500 border-blue-500 text-white animate-pulse
+                                @if($step['status'] === 'completed') bg-green-500 border-green-500 text-white
+                                @elseif($step['status'] === 'ongoing') bg-blue-500 border-blue-500 text-white animate-pulse
                                 @else bg-gray-700 border-gray-600 text-gray-400 @endif">
-                                @if($phase->status === 'completed')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                @elseif($phase->status === 'ongoing')
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                @else
-                                    <span class="text-xs">{{ $phase->phase_order }}</span>
-                                @endif
+                                <span class="text-xs font-semibold">{{ $index + 1 }}</span>
                             </div>
-                            <p class="text-xs text-gray-400 font-medium">{{ Str::limit($phase->display_name, 16) }}</p>
+                            <p class="text-xs text-gray-400 font-medium">{{ $step['label'] }}</p>
                             <p class="text-[10px] mt-1
-                                @if($phase->status === 'completed') text-green-400
-                                @elseif($phase->status === 'ongoing') text-blue-400
+                                @if($step['status'] === 'completed') text-green-400
+                                @elseif($step['status'] === 'ongoing') text-blue-400
                                 @else text-gray-500 @endif">
-                                {{ ucfirst($phase->status) }}
+                                {{ $step['caption'] }}
                             </p>
                         </div>
                         @endforeach
