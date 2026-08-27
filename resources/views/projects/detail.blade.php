@@ -260,37 +260,39 @@
         {{-- KOLOM KIRI: PROGRESS DETAILS --}}
         <div class="lg:col-span-2 space-y-6">
             
-            {{-- PROGRESS BAR PER FASE --}}
+            {{-- PROGRESS BAR PER DIVISI --}}
             <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 class="text-lg font-semibold text-white mb-4">📊 Progress Details</h3>
                 
-                @if($project->phases->count() > 0)
+                @if($project->divisions->count() > 0)
                 <div class="space-y-4">
-                    @foreach($project->phases as $phase)
+                    @foreach($project->divisions as $division)
+                    @php
+                        $completedTasks = $division->tasks->where('status', 'done')->count();
+                        $totalTasks = $division->tasks->count();
+                        $divisionProgress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 2) : 0;
+                    @endphp
                     <div>
                         <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-300">{{ $phase->display_name }}</span>
-                            <span class="text-gray-400">{{ $phase->progress }}%</span>
+                            <span class="text-gray-300">{{ $division->name }}</span>
+                            <span class="text-gray-400">{{ \App\Models\ProjectTask::formatSlaPercentage($divisionProgress) }}</span>
                         </div>
                         <div class="w-full bg-gray-700 rounded-full h-2.5">
                             <div class="h-2.5 rounded-full transition-all duration-500
-                                @if($phase->status === 'completed') bg-green-500
-                                @elseif($phase->status === 'ongoing') bg-blue-500
+                                @if($divisionProgress >= 100) bg-green-500
+                                @elseif($divisionProgress > 0) bg-blue-500
                                 @else bg-purple-500 @endif"
-                                style="width: {{ $phase->progress }}%"></div>
+                                style="width: {{ $divisionProgress }}%"></div>
                         </div>
-                        {{-- SLA Info per Phase --}}
-                        @if($phase->sla_status && $phase->sla_status !== 'on_track')
-                        <p class="text-[10px] mt-1 {{ $phase->sla_status_color }}">
-                            ⚠️ SLA: {{ $phase->sla_status_label }}
+                        <p class="text-xs mt-1 text-gray-500">
+                            {{ $completedTasks }}/{{ $totalTasks }} task selesai
                         </p>
-                        @endif
                     </div>
                     @endforeach
                 </div>
                 @else
                 <p class="text-gray-400 text-center py-4">
-                    Data fase proyek belum tersedia.
+                    Data divisi proyek belum tersedia.
                 </p>
                 @endif
                 

@@ -112,7 +112,7 @@ class Project extends Model
     // ==========================================
 
     /**
-     * Hitung Overall Progress dari rata-rata phases
+     * Hitung Overall Progress dari rata-rata progress divisi.
      */
     public function getOverallProgressAttribute()
     {

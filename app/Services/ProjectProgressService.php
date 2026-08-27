@@ -4,21 +4,20 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\ProjectDivision;
-use App\Models\ProjectTask;
 use Illuminate\Support\Collection;
 
 class ProjectProgressService
 {
     public static function projectProgress(Project $project): float
     {
-        $tasks = self::projectTasks($project);
-        $totalTasks = $tasks->count();
+        $divisions = self::projectDivisions($project);
+        $totalDivisions = $divisions->count();
 
-        if ($totalTasks === 0) {
+        if ($totalDivisions === 0) {
             return 0.0;
         }
 
-        return self::percentage($tasks->where('status', 'done')->count(), $totalTasks);
+        return round($divisions->avg(fn(ProjectDivision $division) => self::divisionProgress($division)), 2);
     }
 
     public static function divisionProgress(ProjectDivision $division): float
@@ -65,19 +64,6 @@ class ProjectProgressService
         return round(($done / $total) * 100, 2);
     }
 
-    private static function projectTasks(Project $project): Collection
-    {
-        if ($project->relationLoaded('tasks')) {
-            return $project->tasks;
-        }
-
-        if (!$project->exists) {
-            return collect();
-        }
-
-        return $project->tasks()->get();
-    }
-
     private static function divisionTasks(ProjectDivision $division): Collection
     {
         if ($division->relationLoaded('tasks')) {
@@ -89,5 +75,18 @@ class ProjectProgressService
         }
 
         return $division->tasks()->get();
+    }
+
+    private static function projectDivisions(Project $project): Collection
+    {
+        if ($project->relationLoaded('divisions')) {
+            return $project->divisions;
+        }
+
+        if (!$project->exists) {
+            return collect();
+        }
+
+        return $project->divisions()->get();
     }
 }
