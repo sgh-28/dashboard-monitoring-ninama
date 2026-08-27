@@ -469,36 +469,30 @@
             <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 class="text-lg font-semibold text-white mb-4">📅 Progress Timeline</h3>
                 
-                @if($project->phases->count() > 0)
+                @if(isset($workflowSteps) && count($workflowSteps) > 0)
                 <div class="space-y-3">
-                    @foreach($project->phases as $phase)
+                    @foreach($workflowSteps as $step)
                     <div class="flex items-center justify-between p-3 rounded-lg 
-                        @if($phase->status === 'ongoing') bg-blue-500/10 border border-blue-500/30
+                        @if($step['status'] === 'ongoing') bg-blue-500/10 border border-blue-500/30
+                        @elseif($step['status'] === 'completed') bg-green-500/10 border border-green-500/20
                         @else bg-gray-700/50 @endif">
                         <div class="flex items-center gap-3">
                             <div class="w-3 h-3 rounded-full
-                                @if($phase->status === 'completed') bg-green-500
-                                @elseif($phase->status === 'ongoing') bg-blue-500 animate-pulse
+                                @if($step['status'] === 'completed') bg-green-500
+                                @elseif($step['status'] === 'ongoing') bg-blue-500 animate-pulse
                                 @else bg-gray-500 @endif"></div>
                             <div>
-                                <p class="text-sm font-medium text-white">{{ $phase->display_name }}</p>
-                                <p class="text-xs text-gray-400">
-                                    @if($phase->target_date)
-                                        Target: {{ $phase->target_date->format('d M') }}
-                                    @endif
-                                </p>
+                                <p class="text-sm font-medium text-white">{{ $step['label'] }}</p>
+                                <p class="text-xs text-gray-400">{{ $step['caption'] }}</p>
                             </div>
                         </div>
                         <div class="text-right">
                             <span class="text-xs px-2 py-1 rounded
-                                @if($phase->status === 'completed') bg-green-500/20 text-green-400
-                                @elseif($phase->status === 'ongoing') bg-blue-500/20 text-blue-400
+                                @if($step['status'] === 'completed') bg-green-500/20 text-green-400
+                                @elseif($step['status'] === 'ongoing') bg-blue-500/20 text-blue-400
                                 @else bg-gray-500/20 text-gray-400 @endif">
-                                {{ $phase->status === 'completed' ? 'Selesai' : ($phase->status === 'ongoing' ? 'Berjalan' : 'Menunggu') }}
+                                {{ $step['status'] === 'completed' ? 'Selesai' : ($step['status'] === 'ongoing' ? 'Berjalan' : 'Menunggu') }}
                             </span>
-                            @if($phase->sla_status === 'breached')
-                            <p class="text-[10px] text-red-400 mt-1">SLA Breached!</p>
-                            @endif
                         </div>
                     </div>
                     @endforeach
