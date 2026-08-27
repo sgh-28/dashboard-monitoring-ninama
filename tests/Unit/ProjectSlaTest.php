@@ -118,7 +118,7 @@ class ProjectSlaTest extends TestCase
         $this->assertSame(94.44, $division->fresh('tasks')->division_sla_percentage);
     }
 
-    public function test_project_sla_is_weighted_by_task_not_plain_average_of_divisions(): void
+    public function test_project_sla_uses_average_of_division_sla_percentages(): void
     {
         $project = $this->project();
         $ui = $this->division($project, 'UI/UX');
@@ -129,7 +129,7 @@ class ProjectSlaTest extends TestCase
         $this->task(project: $project, division: $ui, status: 'done', start: '2026-07-01', deadline: '2026-07-05', completed: '2026-07-05');
         $this->task(project: $project, division: $devops, status: 'done', start: '2026-07-01', deadline: '2026-07-05', completed: '2026-07-10');
 
-        $this->assertSame(87.5, $project->fresh(['tasks', 'divisions.tasks'])->project_sla_percentage);
+        $this->assertSame(75.0, $project->fresh(['tasks', 'divisions.tasks'])->project_sla_percentage);
     }
 
     public function test_progress_one_hundred_can_have_sla_below_one_hundred(): void

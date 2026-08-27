@@ -137,9 +137,16 @@ class Project extends Model
     public function getSlaSummaryAttribute(): array
     {
         $tasks = $this->slaTasks();
+        $divisionSummaries = $this->slaDivisions()
+            ->filter(fn($division) => $division instanceof ProjectDivision)
+            ->map(fn(ProjectDivision $division) => $division->sla_summary);
+
         $evaluatedTasks = $tasks->filter(fn(ProjectTask $task) => $task->task_sla_percentage !== null);
-        $totalSlaPoints = round($evaluatedTasks->sum(fn(ProjectTask $task) => $task->task_sla_percentage), 2);
         $evaluatedCount = $evaluatedTasks->count();
+        $evaluatedDivisionSummaries = $divisionSummaries
+            ->filter(fn(array $summary) => $summary['sla_percentage'] !== null)
+            ->values();
+        $totalSlaPoints = round($evaluatedDivisionSummaries->sum('sla_percentage'), 2);
 
         return [
             'total_tasks' => $tasks->count(),
@@ -151,7 +158,9 @@ class Project extends Model
             'warning_tasks' => $tasks->where('sla_evaluation_status', 'warning')->count(),
             'breached_tasks' => $tasks->where('sla_evaluation_status', 'breached')->count(),
             'sla_points' => $totalSlaPoints,
-            'sla_percentage' => $evaluatedCount > 0 ? round($totalSlaPoints / $evaluatedCount, 2) : null,
+            'sla_percentage' => $evaluatedDivisionSummaries->isNotEmpty()
+                ? round($totalSlaPoints / $evaluatedDivisionSummaries->count(), 2)
+                : null,
             'is_final' => $tasks->count() > 0
                 && $this->status === 'done'
                 && filled($this->completed_by)
@@ -242,6 +251,19 @@ class Project extends Model
         }
 
         return $this->tasks()->get();
+    }
+
+    private function slaDivisions(): Collection
+    {
+        if ($this->relationLoaded('divisions')) {
+            return $this->divisions;
+        }
+
+        if (!$this->exists) {
+            return collect();
+        }
+
+        return $this->divisions()->with('tasks')->get();
     }
 
     private function completedByIsAuthorizedProjectManagement(): bool

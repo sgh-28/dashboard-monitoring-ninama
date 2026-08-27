@@ -417,7 +417,7 @@
                 </div>
 
                 <p class="text-xs text-gray-500 mt-4">
-                    Rumus: total poin SLA task yang sudah dapat dinilai / jumlah task yang sudah dapat dinilai.
+                    Rumus: rata-rata SLA task per divisi, lalu dirata-ratakan antar divisi proyek.
                 </p>
             </div>
 
