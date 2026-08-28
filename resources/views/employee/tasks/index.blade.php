@@ -4,10 +4,15 @@
 
 @section('content')
 <div class="p-6">
+    @php
+        $currentUser = Auth::user();
+        $roleName = ucfirst(str_replace('_', ' ', $currentUser?->role?->name ?? 'User'));
+        $divisionName = $currentUser?->jabatan ?: ($currentUser?->bidang_name ?? '-');
+    @endphp
     <div class="mb-6 flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-white">📋 Daftar Tugas Saya</h1>
-            <p class="text-gray-400 text-sm">Semua tugas yang ditugaskan kepada Anda</p>
+            <p class="text-gray-400 text-sm">Login sebagai {{ $roleName }} - {{ $currentUser?->bidang_name ?? '-' }} / {{ $divisionName }}</p>
         </div>
     </div>
 
@@ -171,6 +176,13 @@
                                     @elseif($task->status === 'ongoing') 🔄 Dikerjakan
                                     @else ⏳ Pending @endif
                                 </span>
+                                @if($task->verification_status === 'pending_review')
+                                    <p class="mt-2 text-xs text-yellow-300">Menunggu verifikasi PM</p>
+                                @elseif($task->verification_status === 'revision_requested')
+                                    <p class="mt-2 text-xs text-red-300">Perlu revisi</p>
+                                @elseif($task->verification_status === 'approved')
+                                    <p class="mt-2 text-xs text-green-300">Disetujui PM</p>
+                                @endif
                             </td>
                             <td class="px-4 py-3">
                                 @if($deadline)
@@ -204,7 +216,7 @@
                                     @if($task->status !== 'done')
                                         <a href="{{ route('employee.tasks.submit.form', $task) }}" 
                                            class="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition">
-                                            Selesai
+                                            {{ $task->verification_status === 'revision_requested' ? 'Kirim Ulang' : 'Selesai' }}
                                         </a>
                                     @endif
                                 </div>

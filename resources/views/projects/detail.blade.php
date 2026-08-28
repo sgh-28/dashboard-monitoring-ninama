@@ -223,17 +223,53 @@
                                         @else
                                             <p class="text-xs text-gray-500 mt-2">Bukti foto belum tersedia.</p>
                                         @endif
-                                        @if(isset($canVerifyTasks) && $canVerifyTasks && $task->verification_status !== 'approved')
-                                            <form action="{{ route('employee.tasks.tasks.approve', $task) }}" method="POST" class="mt-3 space-y-2">
-                                                @csrf
-                                                <textarea name="verification_notes" rows="2"
-                                                          class="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-white"
-                                                          placeholder="Catatan verifikasi Project Management"></textarea>
-                                                <button type="submit"
-                                                        class="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-green-700">
-                                                    Approve Task
-                                                </button>
-                                            </form>
+                                        @if($task->submissions->isNotEmpty())
+                                            <details class="mt-3 rounded border border-gray-700 bg-gray-900/40 p-2">
+                                                <summary class="cursor-pointer text-xs font-medium text-blue-300">Riwayat pengerjaan</summary>
+                                                <div class="mt-2 space-y-2">
+                                                    @foreach($task->submissions as $submission)
+                                                        <div class="rounded border border-gray-700 p-2 text-xs">
+                                                            <div class="flex justify-between gap-2 text-gray-400">
+                                                                <span>{{ $submission->status_label }}</span>
+                                                                <span>{{ $submission->created_at->format('d/m/Y H:i') }}</span>
+                                                            </div>
+                                                            @if($submission->completion_notes)
+                                                                <p class="mt-2 text-gray-300 whitespace-pre-line">{{ Str::limit($submission->completion_notes, 120) }}</p>
+                                                            @endif
+                                                            @if($submission->proof_image)
+                                                                <a href="{{ asset('storage/' . $submission->proof_image) }}" target="_blank" class="mt-2 inline-flex text-blue-400 hover:underline">Lihat bukti</a>
+                                                            @endif
+                                                            @if($submission->revision_notes)
+                                                                <p class="mt-2 text-red-300 whitespace-pre-line">Revisi: {{ $submission->revision_notes }}</p>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </details>
+                                        @endif
+                                        @if(isset($canVerifyTasks) && $canVerifyTasks && $task->verification_status === 'pending_review')
+                                            <div class="mt-3 space-y-3">
+                                                <form action="{{ route('employee.tasks.tasks.approve', $task) }}" method="POST" class="space-y-2">
+                                                    @csrf
+                                                    <textarea name="verification_notes" rows="2"
+                                                              class="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-white"
+                                                              placeholder="Catatan approval Project Management (opsional)"></textarea>
+                                                    <button type="submit"
+                                                            class="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-green-700">
+                                                        Approve
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('employee.tasks.tasks.revision', $task) }}" method="POST" class="space-y-2">
+                                                    @csrf
+                                                    <textarea name="revision_notes" rows="2" required
+                                                              class="w-full rounded border border-red-500/40 bg-red-950/30 px-3 py-2 text-xs text-white"
+                                                              placeholder="Tulis bagian yang harus direvisi oleh pegawai"></textarea>
+                                                    <button type="submit"
+                                                            class="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-700">
+                                                        Revisi
+                                                    </button>
+                                                </form>
+                                            </div>
                                         @endif
                                         @if($task->verification_notes)
                                             <div class="mt-3 rounded border border-gray-700 bg-gray-900/40 p-2">
@@ -242,7 +278,39 @@
                                             </div>
                                         @endif
                                     @else
-                                        <span class="text-xs text-gray-500">Belum ada laporan.</span>
+                                        @if($task->verification_status === 'revision_requested' && $task->verification_notes)
+                                            <div class="rounded border border-red-500/30 bg-red-900/20 p-2">
+                                                <p class="text-xs text-red-200 mb-1">Catatan revisi terakhir:</p>
+                                                <p class="text-xs text-red-100 whitespace-pre-line">{{ $task->verification_notes }}</p>
+                                            </div>
+                                        @else
+                                            <span class="text-xs text-gray-500">Belum ada laporan.</span>
+                                        @endif
+
+                                        @if($task->submissions->isNotEmpty())
+                                            <details class="mt-3 rounded border border-gray-700 bg-gray-900/40 p-2">
+                                                <summary class="cursor-pointer text-xs font-medium text-blue-300">Riwayat pengerjaan</summary>
+                                                <div class="mt-2 space-y-2">
+                                                    @foreach($task->submissions as $submission)
+                                                        <div class="rounded border border-gray-700 p-2 text-xs">
+                                                            <div class="flex justify-between gap-2 text-gray-400">
+                                                                <span>{{ $submission->status_label }}</span>
+                                                                <span>{{ $submission->created_at->format('d/m/Y H:i') }}</span>
+                                                            </div>
+                                                            @if($submission->completion_notes)
+                                                                <p class="mt-2 text-gray-300 whitespace-pre-line">{{ Str::limit($submission->completion_notes, 120) }}</p>
+                                                            @endif
+                                                            @if($submission->proof_image)
+                                                                <a href="{{ asset('storage/' . $submission->proof_image) }}" target="_blank" class="mt-2 inline-flex text-blue-400 hover:underline">Lihat bukti</a>
+                                                            @endif
+                                                            @if($submission->revision_notes)
+                                                                <p class="mt-2 text-red-300 whitespace-pre-line">Revisi: {{ $submission->revision_notes }}</p>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </details>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>
@@ -268,9 +336,9 @@
                 <div class="space-y-4">
                     @foreach($project->divisions as $division)
                     @php
-                        $completedTasks = $division->tasks->where('status', 'done')->count();
                         $totalTasks = $division->tasks->count();
-                        $divisionProgress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 2) : 0;
+                        $completedTasks = $division->tasks->where('status', 'done')->count();
+                        $divisionProgress = $totalTasks > 0 ? round((float) $division->tasks->avg(fn($task) => (int) ($task->progress ?? 0)), 2) : 0;
                     @endphp
                     <div>
                         <div class="flex justify-between text-sm mb-1">

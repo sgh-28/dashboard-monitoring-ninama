@@ -82,6 +82,47 @@
     </div>
     @endif
 
+    @if($task->verification_status === 'revision_requested' && $task->verification_notes)
+    <div class="bg-red-900/20 rounded-lg p-6 border border-red-500/40 mb-6">
+        <h3 class="text-lg font-semibold text-red-200 mb-3">Catatan Revisi Project Management</h3>
+        <p class="text-red-100 whitespace-pre-line">{{ $task->verification_notes }}</p>
+        <p class="text-xs text-red-200/70 mt-3">Silakan perbaiki pekerjaan lalu kirim ulang laporan terbaru.</p>
+    </div>
+    @endif
+
+    @if($task->submissions->isNotEmpty())
+    <details class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+        <summary class="cursor-pointer text-lg font-semibold text-white">Riwayat Pengerjaan</summary>
+        <div class="mt-4 space-y-4">
+            @foreach($task->submissions as $submission)
+                <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <p class="font-medium text-white">{{ $submission->status_label }}</p>
+                            <p class="text-xs text-gray-500">{{ $submission->created_at->format('d F Y, H:i') }}</p>
+                        </div>
+                        @if($submission->reviewer)
+                            <p class="text-xs text-gray-400">Dicek oleh {{ $submission->reviewer->name }}</p>
+                        @endif
+                    </div>
+                    @if($submission->completion_notes)
+                        <p class="mt-3 text-sm text-gray-300 whitespace-pre-line">{{ $submission->completion_notes }}</p>
+                    @endif
+                    @if($submission->proof_image)
+                        <a href="{{ asset('storage/' . $submission->proof_image) }}" target="_blank" class="mt-3 inline-flex text-xs text-blue-400 hover:underline">Lihat bukti foto</a>
+                    @endif
+                    @if($submission->revision_notes)
+                        <div class="mt-3 rounded border border-red-500/30 bg-red-900/20 p-3">
+                            <p class="text-xs text-red-200 mb-1">Catatan revisi:</p>
+                            <p class="text-sm text-red-100 whitespace-pre-line">{{ $submission->revision_notes }}</p>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </details>
+    @endif
+
     {{-- BUKTI PENGERJAAN (Jika sudah selesai) --}}
     @if($task->status === 'done')
     <div class="bg-gray-800 rounded-lg p-6 border border-green-500/30 mb-6">

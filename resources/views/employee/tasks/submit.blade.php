@@ -21,6 +21,13 @@
         @endif
     </div>
 
+    @if($task->verification_status === 'revision_requested' && $task->verification_notes)
+        <div class="bg-red-900/20 border border-red-500/40 rounded-lg p-4 mb-6">
+            <h3 class="text-red-200 font-semibold mb-2">Catatan revisi dari Project Management</h3>
+            <p class="text-sm text-red-100 whitespace-pre-line">{{ $task->verification_notes }}</p>
+        </div>
+    @endif
+
     {{-- FORM SUBMIT --}}
     <form action="{{ route('employee.tasks.submit', $task) }}" method="POST" enctype="multipart/form-data" 
           class="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
@@ -62,7 +69,7 @@
         {{-- PERINGATAN --}}
         <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
             <p class="text-sm text-yellow-300">
-                ⚠️ <strong>Perhatian:</strong> Setelah Anda mengirim laporan ini, status tugas akan berubah menjadi <strong>Selesai (Done)</strong> dan akan dilaporkan ke Admin & Direktur. Pastikan data yang Anda isi sudah benar.
+                <strong>Perhatian:</strong> Setelah laporan dikirim, progress tugas menjadi 85% dan menunggu verifikasi Project Management. Progress menjadi 100% setelah disetujui.
             </p>
         </div>
 

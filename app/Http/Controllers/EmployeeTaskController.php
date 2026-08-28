@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Models\ProjectTaskSubmission;
 use App\Services\MilestoneService;
 use App\Services\ProjectProgressService;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class EmployeeTaskController extends Controller
     {
         $user = Auth::user();
         $query = ProjectTask::where('assigned_to', Auth::id())
-            ->with(['project', 'division']);
+            ->with(['project', 'division', 'latestSubmission']);
 
         // Filter status
         if ($request->filled('status')) {
@@ -68,6 +69,8 @@ class EmployeeTaskController extends Controller
             'tasks.division',
             'tasks.assignee',
             'tasks.verifier',
+            'tasks.submissions.submitter',
+            'tasks.submissions.reviewer',
         ]);
 
         $overallProgress = $project->overall_progress;
@@ -91,6 +94,7 @@ class EmployeeTaskController extends Controller
         if ($task->assigned_to !== Auth::id()) {
             abort(403);
         }
+        $task->load(['project', 'division', 'submissions.submitter', 'submissions.reviewer']);
         return view('employee.tasks.show', compact('task'));
     }
 
@@ -102,6 +106,7 @@ class EmployeeTaskController extends Controller
         if ($task->assigned_to !== Auth::id()) {
             abort(403, 'Anda tidak berhak mengakses task ini.');
         }
+        $task->load(['project', 'latestSubmission']);
         return view('employee.tasks.submit', compact('task'));
     }
 
@@ -149,19 +154,20 @@ class EmployeeTaskController extends Controller
                     ->withErrors(['proof_image' => 'Format foto harus JPG, JPEG, atau PNG.']);
             }
 
-            if ($task->proof_image) {
-                $oldProofPath = storage_path('app/public/' . $task->proof_image);
-                if (File::exists($oldProofPath)) {
-                    File::delete($oldProofPath);
-                }
-            }
-
             $fileName = 'task-' . $task->id . '-' . now()->format('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $extension;
             $directory = storage_path('app/public/task_proofs');
             File::ensureDirectoryExists($directory);
             $file->move($directory, $fileName);
             $validated['proof_image'] = 'task_proofs/' . $fileName;
         }
+
+        ProjectTaskSubmission::create([
+            'project_task_id' => $task->id,
+            'submitted_by' => Auth::id(),
+            'proof_image' => $validated['proof_image'] ?? null,
+            'completion_notes' => $validated['completion_notes'],
+            'status' => 'submitted',
+        ]);
 
         $validated['status'] = 'done';
         $validated['verification_status'] = 'pending_review';
@@ -170,7 +176,7 @@ class EmployeeTaskController extends Controller
         $validated['verified_at'] = null;
         $validated['completed_at'] = now();
         $validated['actual_end_date'] = now()->toDateString();
-        $validated['progress'] = 100;
+        $validated['progress'] = 85;
         
         $task->update($validated);
 
@@ -187,7 +193,7 @@ class EmployeeTaskController extends Controller
             abort(403, 'Anda tidak berhak memverifikasi task ini.');
         }
 
-        if ($task->status !== 'done') {
+        if ($task->status !== 'done' || $task->verification_status !== 'pending_review') {
             return back()->with('error', 'Task belum selesai dikirim oleh pegawai.');
         }
 
@@ -195,16 +201,71 @@ class EmployeeTaskController extends Controller
             'verification_notes' => 'nullable|string|max:1000',
         ]);
 
+        $latestSubmission = $task->submissions()->first();
+        if ($latestSubmission) {
+            $latestSubmission->update([
+                'status' => 'approved',
+                'revision_notes' => null,
+                'reviewed_by' => $user->id,
+                'reviewed_at' => now(),
+            ]);
+        }
+
         $task->update([
             'verification_status' => 'approved',
             'verification_notes' => $validated['verification_notes'] ?? null,
             'verified_by' => $user->id,
             'verified_at' => now(),
+            'progress' => 100,
         ]);
 
         app(MilestoneService::class)->updateMilestoneStatus($task);
 
         return back()->with('success', "Task {$task->title} berhasil disetujui.");
+    }
+
+    public function requestRevision(Request $request, ProjectTask $task)
+    {
+        $user = Auth::user();
+
+        if (!$this->canManageProject($task->project, $user)) {
+            abort(403, 'Anda tidak berhak memverifikasi task ini.');
+        }
+
+        if ($task->status !== 'done' || $task->verification_status !== 'pending_review') {
+            return back()->with('error', 'Task belum memiliki laporan baru yang dapat direvisi.');
+        }
+
+        $validated = $request->validate([
+            'revision_notes' => 'required|string|max:1000',
+        ], [
+            'revision_notes.required' => 'Catatan revisi wajib diisi.',
+        ]);
+
+        $latestSubmission = $task->submissions()->first();
+        if ($latestSubmission) {
+            $latestSubmission->update([
+                'status' => 'revision_requested',
+                'revision_notes' => $validated['revision_notes'],
+                'reviewed_by' => $user->id,
+                'reviewed_at' => now(),
+            ]);
+        }
+
+        $task->update([
+            'status' => 'ongoing',
+            'verification_status' => 'revision_requested',
+            'verification_notes' => $validated['revision_notes'],
+            'verified_by' => $user->id,
+            'verified_at' => now(),
+            'completed_at' => null,
+            'actual_end_date' => null,
+            'progress' => 75,
+        ]);
+
+        app(MilestoneService::class)->updateMilestoneStatus($task);
+
+        return back()->with('success', "Revisi untuk task {$task->title} berhasil dikirim ke pegawai.");
     }
 
     public function completeProject(Project $project)

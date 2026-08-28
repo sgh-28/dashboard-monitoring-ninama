@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use App\Services\ProjectProgressService;
 
@@ -97,6 +98,16 @@ class ProjectTask extends Model
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(ProjectTaskSubmission::class)->latest();
+    }
+
+    public function latestSubmission()
+    {
+        return $this->hasOne(ProjectTaskSubmission::class)->latestOfMany();
     }
 
     /**
@@ -410,6 +421,7 @@ class ProjectTask extends Model
         return match($this->verification_status) {
             'pending_review' => 'Menunggu Verifikasi PM',
             'approved' => 'Disetujui PM',
+            'revision_requested' => 'Perlu Revisi',
             default => 'Belum Diverifikasi',
         };
     }
@@ -419,6 +431,7 @@ class ProjectTask extends Model
         return match($this->verification_status) {
             'pending_review' => 'bg-yellow-500/20 text-yellow-300',
             'approved' => 'bg-green-500/20 text-green-400',
+            'revision_requested' => 'bg-red-500/20 text-red-300',
             default => 'bg-gray-500/20 text-gray-400',
         };
     }

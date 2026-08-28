@@ -29,7 +29,7 @@ class ProjectProgressService
             return 0.0;
         }
 
-        return self::percentage($tasks->where('status', 'done')->count(), $totalTasks);
+        return round((float) $tasks->avg(fn($task) => (int) ($task->progress ?? 0)), 2);
     }
 
     public static function syncProject(int|Project $project): void

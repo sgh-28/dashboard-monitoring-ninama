@@ -271,6 +271,8 @@ class AdminProjectController extends Controller
             'tasks.division',
             'tasks.assignee',
             'tasks.verifier',
+            'tasks.submissions.submitter',
+            'tasks.submissions.reviewer',
         ]);
 
         $overallProgress = $project->overall_progress;

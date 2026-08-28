@@ -194,6 +194,20 @@
                             @endphp
                             {{ ucfirst(str_replace('_', ' ', $roleLabel)) }}
                         </p>
+                        @php
+                            $identityDetails = collect([
+                                Auth::user()?->bidang_name,
+                                Auth::user()?->jabatan,
+                            ])
+                                ->filter(fn($value) => filled($value) && $value !== '-')
+                                ->unique()
+                                ->implode(' / ');
+                        @endphp
+                        @if($identityDetails)
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                                {{ $identityDetails }}
+                            </p>
+                        @endif
                     </div>
                 </div>
                 
@@ -234,7 +248,12 @@
                 </button>
                 <div class="min-w-0">
                     <p class="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">@yield('title', 'Business Dashboard - Ninama')</p>
-                    <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()?->name ?? 'User' }}</p>
+                    <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                        {{ Auth::user()?->name ?? 'User' }}
+                        @if(!empty($identityDetails))
+                            - {{ $identityDetails }}
+                        @endif
+                    </p>
                 </div>
             </div>
             @if(session('success'))

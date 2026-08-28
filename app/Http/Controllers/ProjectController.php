@@ -81,7 +81,7 @@ class ProjectController extends Controller
     {
         $project->load(['phases' => function($q) {
             $q->orderBy('phase_order');
-        }, 'customer', 'divisions.tasks', 'tasks.division', 'tasks.assignee', 'tasks.verifier']);
+        }, 'customer', 'divisions.tasks', 'tasks.division', 'tasks.assignee', 'tasks.verifier', 'tasks.submissions.submitter', 'tasks.submissions.reviewer']);
 
         $overallProgress = $project->overall_progress;
         $slaStatus = $project->project_sla_status;

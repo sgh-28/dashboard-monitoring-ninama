@@ -141,6 +141,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/projects/{project}', [EmployeeTaskController::class, 'showManagedProject'])->name('projects.show');
         Route::post('/projects/{project}/complete', [EmployeeTaskController::class, 'completeProject'])->name('projects.complete');
         Route::post('/tasks/{task}/approve', [EmployeeTaskController::class, 'approveTask'])->name('tasks.approve');
+        Route::post('/tasks/{task}/revision', [EmployeeTaskController::class, 'requestRevision'])->name('tasks.revision');
         Route::get('/{task}', [EmployeeTaskController::class, 'show'])->name('show');
         Route::get('/{task}/submit', [EmployeeTaskController::class, 'submitForm'])->name('submit.form');
         Route::post('/{task}/submit', [EmployeeTaskController::class, 'submit'])->name('submit');
