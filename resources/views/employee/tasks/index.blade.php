@@ -128,6 +128,10 @@
            class="px-4 py-2 text-sm rounded-lg transition {{ $currentStatus === 'done' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }}">
             ✅ Selesai
         </a>
+        <a href="{{ route('employee.tasks.index', ['status' => 'pending_review']) }}"
+           class="px-4 py-2 text-sm rounded-lg transition {{ $currentStatus === 'pending_review' ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }}">
+            Belum di Approve
+        </a>
     </div>
 
     {{-- TABEL TUGAS --}}

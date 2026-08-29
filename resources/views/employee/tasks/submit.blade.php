@@ -69,7 +69,7 @@
         {{-- PERINGATAN --}}
         <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
             <p class="text-sm text-yellow-300">
-                <strong>Perhatian:</strong> Setelah laporan dikirim, progress tugas menjadi 85% dan menunggu verifikasi Project Management. Progress menjadi 100% setelah disetujui.
+                <strong>Perhatian:</strong> Setelah laporan dikirim, progress tugas menjadi 90% dan menunggu verifikasi Project Management. Progress menjadi 100% setelah disetujui.
             </p>
         </div>
 

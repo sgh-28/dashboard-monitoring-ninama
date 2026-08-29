@@ -22,8 +22,10 @@ class EmployeeTaskController extends Controller
         $query = ProjectTask::where('assigned_to', Auth::id())
             ->with(['project', 'division', 'latestSubmission']);
 
-        // Filter status
-        if ($request->filled('status')) {
+        // Filter status / verification status
+        if ($request->status === 'pending_review') {
+            $query->where('verification_status', 'pending_review');
+        } elseif ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
@@ -176,7 +178,7 @@ class EmployeeTaskController extends Controller
         $validated['verified_at'] = null;
         $validated['completed_at'] = now();
         $validated['actual_end_date'] = now()->toDateString();
-        $validated['progress'] = 85;
+        $validated['progress'] = 90;
         
         $task->update($validated);
 
