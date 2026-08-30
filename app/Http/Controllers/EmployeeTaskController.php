@@ -310,7 +310,7 @@ class EmployeeTaskController extends Controller
 
     private function isProjectManagementUser($user): bool
     {
-        return strcasecmp(trim((string) $user?->jabatan), 'Project Management') === 0;
+        return ($user?->role?->name ?? '') === 'project_manager';
     }
 
     private function canCompleteProject(Project $project, $user): bool

@@ -73,17 +73,19 @@ class AdminTaskController extends Controller
             return back()->withInput()->withErrors(['project_id' => $periodError]);
         }
         
+        $assigneeRole = $division->name === 'Project Management' ? 'project_manager' : 'pegawai';
         $assignee = User::where('jabatan', $division->name)
             ->where('bidang', $project->category)
-            ->whereHas('role', function($q) {
-                $q->where('name', 'pegawai');
+            ->whereHas('role', function($q) use ($assigneeRole) {
+                $q->where('name', $assigneeRole);
             })
             ->first();
         
         if (!$assignee) {
+            $accountLabel = $assigneeRole === 'project_manager' ? 'project manager' : 'pegawai';
             return redirect()->back()
                 ->withInput()
-                ->with('error', "Tidak ada pegawai untuk divisi: {$division->name}");
+                ->with('error', "Tidak ada akun {$accountLabel} untuk divisi: {$division->name}");
         }
 
         $tasksCreated = 0;
@@ -143,7 +145,7 @@ class AdminTaskController extends Controller
         $projects = Project::all();
         $divisions = $task->project?->divisions ?? collect();
         $users = User::whereHas('role', function($q) {
-                $q->where('name', 'pegawai');
+                $q->whereIn('name', ['pegawai', 'project_manager']);
             })
             ->with('role')
             ->get();
@@ -186,15 +188,17 @@ class AdminTaskController extends Controller
             return back()->withInput()->withErrors(['deadline' => $dateError]);
         }
 
+        $assigneeRole = $division->name === 'Project Management' ? 'project_manager' : 'pegawai';
         $assignee = User::whereKey($validated['assigned_to'])
             ->where('bidang', $project->category)
             ->where('jabatan', $division->name)
-            ->whereHas('role', fn($q) => $q->where('name', 'pegawai'))
+            ->whereHas('role', fn($q) => $q->where('name', $assigneeRole))
             ->first();
 
         if (!$assignee) {
+            $accountLabel = $assigneeRole === 'project_manager' ? 'project manager' : 'pegawai';
             return back()->withInput()->withErrors([
-                'assigned_to' => 'Pegawai harus memiliki bidang dan jabatan yang sesuai dengan proyek dan divisi.',
+                'assigned_to' => "Akun {$accountLabel} harus memiliki bidang dan jabatan yang sesuai dengan proyek dan divisi.",
             ]);
         }
 

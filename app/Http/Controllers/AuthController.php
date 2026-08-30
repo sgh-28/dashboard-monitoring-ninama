@@ -58,7 +58,7 @@ class AuthController extends Controller
         }
 
         // Pegawai → Dashboard Pegawai
-        if ($roleName === 'pegawai') {
+        if (in_array($roleName, ['pegawai', 'project_manager'], true)) {
             return redirect()->intended('/my-tasks');
         }
 

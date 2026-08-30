@@ -15,9 +15,9 @@ class AdminUserController extends Controller
 {
     public function index()
     {
-        // Ambil user internal (pegawai & marketing saja)
+        // Ambil user internal (pegawai, project manager, dan marketing)
         $users = User::whereHas('role', function($q) {
-                $q->whereIn('name', ['pegawai', 'marketing']);
+                $q->whereIn('name', ['pegawai', 'project_manager', 'marketing']);
             })
             ->with('role')
             ->orderBy('name')
@@ -28,7 +28,13 @@ class AdminUserController extends Controller
 
     public function create()
     {
-        $roles = Role::whereIn('name', ['pegawai', 'marketing'])->get();
+        $roleNames = ['pegawai', 'project_manager', 'marketing'];
+
+        if (User::whereHas('role', fn($q) => $q->where('name', 'marketing'))->exists()) {
+            $roleNames = ['pegawai', 'project_manager'];
+        }
+
+        $roles = Role::whereIn('name', $roleNames)->get();
         return view('admin.users.create', compact('roles'));
     }
 
@@ -36,6 +42,8 @@ class AdminUserController extends Controller
     {
         $role = Role::find($request->role_id);
         $isPegawai = $role?->name === 'pegawai';
+        $isProjectManager = $role?->name === 'project_manager';
+        $needsBidang = $isPegawai || $isProjectManager;
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -43,21 +51,27 @@ class AdminUserController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'required|string|max:20',
-            'bidang' => [$isPegawai ? 'required' : 'nullable', 'in:web,internet,cctv'],
+            'bidang' => [$needsBidang ? 'required' : 'nullable', 'in:web,internet,cctv'],
             'jabatan' => [$isPegawai ? 'required' : 'nullable', 'string', 'max:255'],
         ]);
 
+        if ($role?->name === 'marketing' && User::whereHas('role', fn($q) => $q->where('name', 'marketing'))->exists()) {
+            return back()
+                ->withInput()
+                ->withErrors(['role_id' => 'Akun marketing hanya boleh 1 akun untuk semua bidang.']);
+        }
+
         $rawPassword = $validated['password'];
         $validated['password'] = Hash::make($validated['password']);
-        $validated['bidang'] = $isPegawai ? $validated['bidang'] : null;
-        $validated['jabatan'] = $isPegawai ? $validated['jabatan'] : 'Marketing';
+        $validated['bidang'] = $needsBidang ? $validated['bidang'] : null;
+        $validated['jabatan'] = $isProjectManager ? 'Project Management' : ($isPegawai ? $validated['jabatan'] : 'Marketing');
 
         $user = User::create($validated);
 
         try {
-            $message = "*INFORMASI AKUN PEGAWAI BARU - NINAMA*\n\n" .
+            $message = "*INFORMASI AKUN INTERNAL BARU - NINAMA*\n\n" .
                        "Halo *{$user->name}*,\n\n" .
-                       "Akun pegawai Anda telah berhasil dibuat oleh Admin. Berikut adalah detail informasi akun Anda untuk login ke Dashboard Ninama:\n\n" .
+                       "Akun Anda telah berhasil dibuat oleh Admin. Berikut adalah detail informasi akun Anda untuk login ke Dashboard Ninama:\n\n" .
                        "📧 *Email:* {$user->email}\n" .
                        "🔑 *Password:* {$rawPassword}\n" .
                        "💼 *Jabatan:* {$user->jabatan}\n" .
@@ -71,15 +85,15 @@ class AdminUserController extends Controller
             Log::info("WhatsApp akun kredensial terkirim ke {$user->phone}");
         } catch (\Exception $e) {
             Log::error("Gagal kirim WhatsApp kredensial ke {$user->phone}: " . $e->getMessage());
-            return redirect()->route('admin.users.index')->with('success', 'Akun pegawai berhasil ditambahkan (Namun gagal mengirim notifikasi WhatsApp).');
+            return redirect()->route('admin.users.index')->with('success', 'Akun internal berhasil ditambahkan (Namun gagal mengirim notifikasi WhatsApp).');
         }
 
-        return redirect()->route('admin.users.index')->with('success', 'Akun pegawai berhasil ditambahkan dan detail login telah dikirim melalui WhatsApp.');
+        return redirect()->route('admin.users.index')->with('success', 'Akun internal berhasil ditambahkan dan detail login telah dikirim melalui WhatsApp.');
     }
 
     public function edit(User $user)
     {
-        $roles = Role::whereIn('name', ['pegawai', 'marketing'])->get();
+        $roles = Role::whereIn('name', ['pegawai', 'project_manager', 'marketing'])->get();
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
@@ -87,6 +101,8 @@ class AdminUserController extends Controller
     {
         $role = Role::find($request->role_id);
         $isPegawai = $role?->name === 'pegawai';
+        $isProjectManager = $role?->name === 'project_manager';
+        $needsBidang = $isPegawai || $isProjectManager;
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -94,9 +110,15 @@ class AdminUserController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
             'phone' => 'nullable|string|max:20',
-            'bidang' => [$isPegawai ? 'required' : 'nullable', 'in:web,internet,cctv'],
+            'bidang' => [$needsBidang ? 'required' : 'nullable', 'in:web,internet,cctv'],
             'jabatan' => [$isPegawai ? 'required' : 'nullable', 'string', 'max:255'],
         ]);
+
+        if ($role?->name === 'marketing' && User::where('id', '!=', $user->id)->whereHas('role', fn($q) => $q->where('name', 'marketing'))->exists()) {
+            return back()
+                ->withInput()
+                ->withErrors(['role_id' => 'Akun marketing hanya boleh 1 akun untuk semua bidang.']);
+        }
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -104,12 +126,12 @@ class AdminUserController extends Controller
             unset($validated['password']);
         }
 
-        $validated['bidang'] = $isPegawai ? $validated['bidang'] : null;
-        $validated['jabatan'] = $isPegawai ? $validated['jabatan'] : 'Marketing';
+        $validated['bidang'] = $needsBidang ? $validated['bidang'] : null;
+        $validated['jabatan'] = $isProjectManager ? 'Project Management' : ($isPegawai ? $validated['jabatan'] : 'Marketing');
 
         $user->update($validated);
 
-        return redirect()->route('admin.users.index')->with('success', 'Akun pegawai berhasil diperbarui.');
+        return redirect()->route('admin.users.index')->with('success', 'Akun internal berhasil diperbarui.');
     }
 
     public function destroy(User $user)
@@ -119,6 +141,6 @@ class AdminUserController extends Controller
         }
 
         $user->delete();
-        return redirect()->route('admin.users.index')->with('success', 'Akun pegawai berhasil dihapus.');
+        return redirect()->route('admin.users.index')->with('success', 'Akun internal berhasil dihapus.');
     }
 }

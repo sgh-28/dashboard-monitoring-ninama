@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Akun Pegawai - Ninama')
+@section('title', 'Tambah Akun Internal - Ninama')
 
 @section('content')
 <div class="p-6 max-w-3xl mx-auto">
     <div class="mb-6">
         <a href="{{ route('admin.users.index') }}" class="text-blue-400 hover:underline text-sm">← Kembali ke Daftar Pegawai</a>
-        <h1 class="text-2xl font-bold text-white mt-2">Tambah Akun Pegawai Baru</h1>
-        <p class="text-gray-400 text-sm">Isi formulir di bawah untuk membuat akun pegawai internal.</p>
+        <h1 class="text-2xl font-bold text-white mt-2">Tambah Akun Internal Baru</h1>
+        <p class="text-gray-400 text-sm">Isi formulir di bawah untuk membuat akun internal.</p>
     </div>
 
     <form action="{{ route('admin.users.store') }}" method="POST" class="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
@@ -39,7 +39,7 @@
                 <option value="">-- Pilih Role --</option>
                 @foreach($roles as $role)
                     <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                        {{ ucfirst($role->name) }}
+                        {{ $role->name === 'project_manager' ? 'Project Manager' : ucfirst($role->name) }}
                     </option>
                 @endforeach
             </select>
@@ -95,8 +95,7 @@ const divisiData = {
         'Frontend',
         'Backend',
         'Testing',
-        'DevOps',
-        'Project Management'
+        'DevOps'
     ],
     internet: [
         'Network Engineer',
@@ -104,16 +103,14 @@ const divisiData = {
         'Technical Support',
         'Server Administrator',
         'Fiber Optic Technician',
-        'Maintenance',
-        'Project Management'
+        'Maintenance'
     ],
     cctv: [
         'CCTV Installer',
         'Configuration',
         'Monitoring',
         'Maintenance',
-        'Troubleshooting',
-        'Project Management'
+        'Troubleshooting'
     ]
 };
 
@@ -126,9 +123,11 @@ document.getElementById('roleSelect').addEventListener('change', function() {
     const bidangSelect = document.getElementById('bidangSelect');
     const divisiSelect = document.getElementById('divisiSelect');
     
-    if (roleName === 'pegawai') {
+    if (roleName === 'pegawai' || roleName === 'project manager') {
         bidangField.style.display = 'block';
         bidangSelect.required = true;
+        divisiField.style.display = roleName === 'project manager' ? 'none' : divisiField.style.display;
+        divisiSelect.required = roleName !== 'project manager';
     } else {
         bidangField.style.display = 'none';
         divisiField.style.display = 'none';
@@ -148,6 +147,14 @@ document.getElementById('bidangSelect').addEventListener('change', function() {
     // Reset divisi
     divisiSelect.innerHTML = '<option value="">-- Pilih Divisi --</option>';
     
+    const roleName = document.getElementById('roleSelect').options[document.getElementById('roleSelect').selectedIndex].text.toLowerCase();
+
+    if (roleName === 'project manager') {
+        divisiField.style.display = 'none';
+        divisiSelect.required = false;
+        return;
+    }
+
     if (selectedBidang && divisiData[selectedBidang]) {
         divisiField.style.display = 'block';
         divisiSelect.required = true;

@@ -124,7 +124,7 @@ class PrepareProjectManagementCompletionSeeder extends Seeder
 
     private function findProjectManagement(string $category): ?User
     {
-        return User::whereHas('role', fn($query) => $query->where('name', 'pegawai'))
+        return User::whereHas('role', fn($query) => $query->where('name', 'project_manager'))
             ->where('bidang', $category)
             ->where('jabatan', 'Project Management')
             ->first();

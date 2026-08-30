@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         $roleAdmin      = Role::firstOrCreate(['name' => 'admin']);
         $roleDirektur   = Role::firstOrCreate(['name' => 'direktur']);
         $rolePegawai    = Role::firstOrCreate(['name' => 'pegawai']);
+        $roleProjectManager = Role::firstOrCreate(['name' => 'project_manager']);
         $roleCustomer   = Role::firstOrCreate(['name' => 'customer']);
         $roleMarketing  = Role::firstOrCreate(['name' => 'marketing']); // ✅ BARU
 
@@ -55,17 +56,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // ✅ MARKETING TEAM (BARU - Terpisah dari Pegawai)
-        $marketing1 = User::firstOrCreate(['email' => 'marketing1@ninama.com'], [
-            'name' => 'Anita Wijaya (Marketing Web)',
-            'password' => Hash::make('password'),
-            'role_id' => $roleMarketing->id,
-        ]);
-
-        $marketing2 = User::firstOrCreate(['email' => 'marketing2@ninama.com'], [
-            'name' => 'Rudi Hermawan (Marketing Internet)',
-            'password' => Hash::make('password'),
-            'role_id' => $roleMarketing->id,
-        ]);
+        $marketing = User::updateOrCreate(
+            ['email' => 'marketing@ninama.com'],
+            [
+                'name' => 'Marketing Ninama',
+                'password' => Hash::make('password'),
+                'role_id' => $roleMarketing->id,
+                'bidang' => null,
+                'jabatan' => 'Marketing',
+            ]
+        );
 
         // Customer
         $customer1 = User::firstOrCreate(['email' => 'customer@ninama.com'], [
@@ -317,7 +317,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'negosiasi',
                 'reason' => null,
                 'notes' => 'Client meminta diskon 10% untuk pembayaran upfront',
-                'employee_id' => $marketing1->id,
+                'employee_id' => $marketing->id,
             ]
         );
 
@@ -338,7 +338,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'deal',
                 'reason' => null,
                 'notes' => 'Kontrak sudah ditandatangani, project mulai Agustus 2024',
-                'employee_id' => $marketing2->id,
+                'employee_id' => $marketing->id,
                 'project_id' => null, // Bisa di-link ke Project jika sudah jadi
             ]
         );
@@ -358,7 +358,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'rejected',
                 'reason' => 'Budget client hanya 20 juta, tidak sesuai dengan scope pekerjaan',
                 'notes' => 'Client mungkin akan kembali dengan budget lebih besar',
-                'employee_id' => $marketing1->id,
+                'employee_id' => $marketing->id,
             ]
         );
 
@@ -377,7 +377,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'menunggu_keputusan',
                 'reason' => null,
                 'notes' => 'Menunggu approval dari yayasan, estimasi keputusan minggu depan',
-                'employee_id' => $marketing2->id,
+                'employee_id' => $marketing->id,
             ]
         );
 
@@ -460,7 +460,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'deal',
                 'reason' => null,
                 'notes' => 'Customer dan project sudah dibuat. Task awal sudah dibagikan ke UI/UX, frontend, dan backend.',
-                'employee_id' => $marketing1->id,
+                'employee_id' => $marketing->id,
                 'project_id' => $projectKlinik->id,
             ]
         );
@@ -538,7 +538,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'deal',
                 'reason' => null,
                 'notes' => 'Customer dan project sudah dibuat. Divisi network dan NOC sudah memiliki task.',
-                'employee_id' => $marketing2->id,
+                'employee_id' => $marketing->id,
                 'project_id' => $projectGudang->id,
             ]
         );
@@ -605,7 +605,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'deal',
                 'reason' => null,
                 'notes' => 'Customer dan project sudah dibuat. Instalasi tahap pertama sedang berjalan.',
-                'employee_id' => $marketing2->id,
+                'employee_id' => $marketing->id,
                 'project_id' => $projectApartemen->id,
             ]
         );
@@ -628,7 +628,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'deal',
                 'reason' => null,
                 'notes' => 'Deal sudah disetujui. Admin perlu membuat akun customer dan project dari tombol copy data.',
-                'employee_id' => $marketing2->id,
+                'employee_id' => $marketing->id,
                 'project_id' => null,
             ]
         );
@@ -669,8 +669,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('  Direktur    : direktur@ninama.com / password');
         $this->command->info('  Pegawai 1   : pegawai1@ninama.com / password');
         $this->command->info('  Pegawai 2   : pegawai2@ninama.com / password');
-        $this->command->info('  Marketing 1 : marketing1@ninama.com / password');
-        $this->command->info('  Marketing 2 : marketing2@ninama.com / password');
+        $this->command->info('  Marketing   : marketing@ninama.com / password');
         $this->command->info('  Customer 1  : customer@ninama.com / password');
     }
 

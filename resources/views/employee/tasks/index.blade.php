@@ -6,7 +6,11 @@
 <div class="p-6">
     @php
         $currentUser = Auth::user();
-        $roleName = ucfirst(str_replace('_', ' ', $currentUser?->role?->name ?? 'User'));
+        $roleName = match($currentUser?->role?->name ?? 'user') {
+            'project_manager' => 'Project Manager',
+            'pegawai' => 'Pegawai',
+            default => ucfirst(str_replace('_', ' ', $currentUser?->role?->name ?? 'User')),
+        };
         $divisionName = $currentUser?->jabatan ?: ($currentUser?->bidang_name ?? '-');
     @endphp
     <div class="mb-6 flex justify-between items-center">

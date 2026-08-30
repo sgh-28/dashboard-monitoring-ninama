@@ -12,6 +12,7 @@ class EmployeeAccountsSeeder extends Seeder
     public function run(): void
     {
         $employeeRole = Role::where('name', 'pegawai')->firstOrFail();
+        $projectManagerRole = Role::firstOrCreate(['name' => 'project_manager']);
 
         $employees = [
             ['name' => 'Project Management Web', 'email' => 'web.pm@ninama.test', 'phone' => '081900000001', 'bidang' => 'web', 'jabatan' => 'Project Management'],
@@ -42,7 +43,7 @@ class EmployeeAccountsSeeder extends Seeder
                     'phone' => $employee['phone'],
                     'bidang' => $employee['bidang'],
                     'jabatan' => $employee['jabatan'],
-                    'role_id' => $employeeRole->id,
+                    'role_id' => $employee['jabatan'] === 'Project Management' ? $projectManagerRole->id : $employeeRole->id,
                     'password' => Hash::make('password'),
                 ]
             );

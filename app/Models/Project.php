@@ -280,8 +280,7 @@ class Project extends Model
             return false;
         }
 
-        return $user->hasRole('pegawai')
-            && strcasecmp(trim((string) $user->jabatan), 'Project Management') === 0
+        return $user->hasRole('project_manager')
             && $user->bidang === $this->category;
     }
 

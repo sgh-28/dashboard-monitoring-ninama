@@ -10,6 +10,7 @@
             'admin' => 'admin.dashboard',
             'direktur' => 'direktur.dashboard',
             'pegawai' => 'employee.dashboard',
+            'project_manager' => 'employee.dashboard',
             'customer' => 'customer.dashboard',
             default => 'main.dashboard',
         };

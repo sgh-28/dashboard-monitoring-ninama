@@ -70,6 +70,11 @@ class User extends Authenticatable
         return $this->hasRole('pegawai');
     }
 
+    public function isProjectManager()
+    {
+        return $this->hasRole('project_manager');
+    }
+
     public function isCustomer()
     {
         return $this->hasRole('customer');

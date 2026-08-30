@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Kelola Akun Pegawai - Ninama')
+@section('title', 'Kelola Akun Internal - Ninama')
 
 @section('content')
 <div class="p-6">
     {{-- HEADER --}}
     <div class="mb-6 flex justify-between items-center flex-wrap gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-white">Kelola Akun Pegawai</h1>
-            <p class="text-gray-400 text-sm">Manajemen akun internal perusahaan (Pegawai & Marketing)</p>
+            <h1 class="text-2xl font-bold text-white">Kelola Akun Internal</h1>
+            <p class="text-gray-400 text-sm">Manajemen akun internal perusahaan (Pegawai, Project Manager, dan Marketing)</p>
         </div>
         <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Tambah Pegawai
+            Tambah Akun
         </a>
     </div>
 
@@ -42,7 +42,7 @@
                         
                         {{-- ✅ KOLOM BIDANG --}}
                         <td class="px-6 py-4">
-                            @if($user->role->name === 'pegawai' && $user->bidang)
+                            @if(in_array($user->role->name, ['pegawai', 'project_manager'], true) && $user->bidang)
                                 <span class="px-2 py-1 text-xs rounded-full 
                                     @if($user->bidang === 'web') bg-blue-900/50 text-blue-300 border border-blue-500/30
                                     @elseif($user->bidang === 'internet') bg-green-900/50 text-green-300 border border-green-500/30
@@ -74,6 +74,7 @@
                                 $roleLabel = match($roleName) {
                                     'admin' => 'Admin',
                                     'pegawai' => 'Pegawai',
+                                    'project_manager' => 'Project Manager',
                                     'marketing' => 'Marketing',
                                     'direktur' => 'Direktur',
                                     'customer' => 'Customer',
@@ -83,6 +84,7 @@
                             <span class="px-2 py-1 text-xs rounded-full 
                                 @if($roleName === 'admin') bg-red-900/50 text-red-300 border border-red-500/30
                                 @elseif($roleName === 'pegawai') bg-green-900/50 text-green-300 border border-green-500/30
+                                @elseif($roleName === 'project_manager') bg-cyan-900/50 text-cyan-300 border border-cyan-500/30
                                 @elseif($roleName === 'marketing') bg-yellow-900/50 text-yellow-300 border border-yellow-500/30
                                 @else bg-gray-700 text-gray-300 @endif">
                                 {{ $roleLabel }}
@@ -101,7 +103,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">Belum ada data pegawai.</td>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">Belum ada data akun internal.</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -60,7 +60,7 @@
     {{-- HEADER --}}
     <div class="mb-6 flex justify-between items-start">
         <div>
-            <a href="{{ (Auth::user()?->role?->name ?? '') === 'pegawai' ? route('employee.tasks.index') : route('projects.category.detail', ['category' => $project->category]) }}" 
+            <a href="{{ in_array(Auth::user()?->role?->name ?? '', ['pegawai', 'project_manager'], true) ? route('employee.tasks.index') : route('projects.category.detail', ['category' => $project->category]) }}"
                class="text-blue-400 hover:underline text-sm mb-2 inline-block">
                ← Kembali ke Daftar Proyek
             </a>

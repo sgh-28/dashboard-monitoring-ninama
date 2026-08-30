@@ -196,8 +196,9 @@
                             @php
                                 $roleLabel = Auth::user()?->role?->name ?? 'user';
                                 if ($roleLabel === 'admin') $roleLabel = 'admin';
+                                if ($roleLabel === 'project_manager') $roleLabel = 'Project Manager';
                             @endphp
-                            {{ ucfirst(str_replace('_', ' ', $roleLabel)) }}
+                            {{ $roleLabel === 'Project Manager' ? $roleLabel : ucfirst(str_replace('_', ' ', $roleLabel)) }}
                         </p>
                         @php
                             $identityDetails = collect([

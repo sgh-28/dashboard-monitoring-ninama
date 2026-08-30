@@ -136,7 +136,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Employee/Marketing Task Management (For assigned users only)
-    Route::middleware(['role:pegawai'])->prefix('my-tasks')->name('employee.tasks.')->group(function () {
+    Route::middleware(['role:pegawai,project_manager'])->prefix('my-tasks')->name('employee.tasks.')->group(function () {
         Route::get('/', [EmployeeTaskController::class, 'index'])->name('index');
         Route::get('/projects/{project}', [EmployeeTaskController::class, 'showManagedProject'])->name('projects.show');
         Route::post('/projects/{project}/complete', [EmployeeTaskController::class, 'completeProject'])->name('projects.complete');
@@ -148,7 +148,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // ==================== EMPLOYEE ROUTES ====================
-    Route::middleware(['role:pegawai'])->prefix('employee')->name('employee.')->group(function () {
+    Route::middleware(['role:pegawai,project_manager'])->prefix('employee')->name('employee.')->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'index'])->name('dashboard');
         Route::get('/projects', [EmployeeController::class, 'projects'])->name('projects');
     });

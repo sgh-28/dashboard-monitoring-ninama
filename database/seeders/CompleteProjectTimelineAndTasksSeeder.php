@@ -148,7 +148,7 @@ class CompleteProjectTimelineAndTasksSeeder extends Seeder
         return User::query()
             ->where('bidang', $category)
             ->where('jabatan', $division)
-            ->whereHas('role', fn($query) => $query->where('name', 'pegawai'))
+            ->whereHas('role', fn($query) => $query->where('name', $division === 'Project Management' ? 'project_manager' : 'pegawai'))
             ->value('id');
     }
 }

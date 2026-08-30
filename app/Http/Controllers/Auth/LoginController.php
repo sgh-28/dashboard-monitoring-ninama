@@ -37,6 +37,7 @@ class LoginController extends Controller
                 'direktur'    => redirect()->route('direktur.dashboard'),
                 'admin'       => redirect()->route('main.dashboard'),
                 'pegawai'     => redirect()->route('employee.tasks.index'),
+                'project_manager' => redirect()->route('employee.tasks.index'),
                 'customer'    => redirect()->route('customer.dashboard'),
                 'marketing'   => redirect()->route('marketing.index'),
                 default       => redirect()->route('main.dashboard'),

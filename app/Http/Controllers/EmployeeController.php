@@ -22,7 +22,7 @@ class EmployeeController extends Controller
     public function projects()
     {
         $user = Auth::user();
-        $isProjectManagement = strcasecmp(trim((string) $user?->jabatan), 'Project Management') === 0;
+        $isProjectManagement = ($user?->role?->name ?? '') === 'project_manager';
 
         $projects = Project::query()
             ->when($isProjectManagement, function ($query) use ($user) {

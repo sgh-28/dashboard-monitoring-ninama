@@ -256,7 +256,7 @@ class AdminProjectController extends Controller
     public function manage(Project $project)
     {
         $project->load(['divisions.tasks', 'customer']);
-        $employees = User::whereHas('role', fn($q) => $q->where('name', 'pegawai'))->get();
+        $employees = User::whereHas('role', fn($q) => $q->whereIn('name', ['pegawai', 'project_manager']))->get();
         
         return view('admin.projects.manage', compact('project', 'employees'));
     }
