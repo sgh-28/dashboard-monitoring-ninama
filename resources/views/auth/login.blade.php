@@ -71,13 +71,6 @@
             </button>
         </form>
 
-        <!-- Demo Accounts -->
-        <div class="mt-8 pt-6 border-t border-gray-700 text-xs text-gray-500 text-center space-y-1">
-            <p>Demo Accounts:</p>
-            <p>admin@ninama.com / password</p>
-            <p>direktur@ninama.com / password</p>
-            <p>customer@ninama.com / password</p>
-        </div>
     </div>
 
     @include('partials.loading-overlay')
