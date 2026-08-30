@@ -8,7 +8,7 @@
     <div class="mb-6 flex justify-between items-center flex-wrap gap-4">
         <div>
             <h1 class="text-2xl font-bold text-white">Dashboard Utama</h1>
-            <p class="text-gray-400 text-sm">Selamat datang, {{ Auth::user()->name }}</p>
+            <p class="text-gray-400 text-sm">Selamat datang, {{ Auth::user()->role?->name === 'admin' ? 'Admin' : Auth::user()->name }}</p>
         </div>
         @if(Auth::user()->role->name === 'admin')
             <a href="{{ route('admin.projects.create') }}" 

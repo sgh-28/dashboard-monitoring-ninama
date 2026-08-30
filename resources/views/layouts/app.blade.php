@@ -178,13 +178,18 @@
 
             <!-- USER INFO & LOGOUT -->
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
+                @php
+                    $displayUserName = (Auth::user()?->role?->name ?? '') === 'admin'
+                        ? 'Admin'
+                        : (Auth::user()?->name ?? 'User');
+                @endphp
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                        {{ strtoupper(substr(Auth::user()?->name ?? 'U', 0, 1)) }}
+                        {{ strtoupper(substr($displayUserName, 0, 1)) }}
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                            {{ (Auth::user()?->role?->name ?? '') === 'admin' ? 'Admin' : (Auth::user()?->name ?? 'User') }}
+                            {{ $displayUserName }}
                         </p>
                         {{-- ✅ PERBAIKAN: Mengubah admin menjadi Admin di tampilan --}}
                         <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
@@ -249,7 +254,7 @@
                 <div class="min-w-0">
                     <p class="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">@yield('title', 'Business Dashboard - Ninama')</p>
                     <p class="truncate text-xs text-gray-500 dark:text-gray-400">
-                        {{ Auth::user()?->name ?? 'User' }}
+                        {{ $displayUserName ?? (Auth::user()?->name ?? 'User') }}
                         @if(!empty($identityDetails))
                             - {{ $identityDetails }}
                         @endif
