@@ -8,7 +8,7 @@
     <div class="mb-6 flex justify-between items-center flex-wrap gap-4">
         <div>
             <h1 class="text-2xl font-bold text-white">Kelola Akun Internal</h1>
-            <p class="text-gray-400 text-sm">Manajemen akun internal perusahaan (Pegawai, Project Manager, dan Marketing)</p>
+            <p class="text-gray-400 text-sm">Manajemen akun internal perusahaan (Pegawai, Project Manager, Marketing, dan Direktur)</p>
         </div>
         <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -86,6 +86,7 @@
                                 @elseif($roleName === 'pegawai') bg-green-900/50 text-green-300 border border-green-500/30
                                 @elseif($roleName === 'project_manager') bg-cyan-900/50 text-cyan-300 border border-cyan-500/30
                                 @elseif($roleName === 'marketing') bg-yellow-900/50 text-yellow-300 border border-yellow-500/30
+                                @elseif($roleName === 'direktur') bg-indigo-900/50 text-indigo-300 border border-indigo-500/30
                                 @else bg-gray-700 text-gray-300 @endif">
                                 {{ $roleLabel }}
                             </span>
@@ -93,11 +94,13 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex justify-end gap-2">
                                 <a href="{{ route('admin.users.edit', $user->id) }}" class="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-700 text-white rounded transition">Edit</a>
-                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus akun ini?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Hapus</button>
-                                </form>
+                                @if(!(($user->role?->name ?? '') === 'direktur' && ($directorCount ?? 0) <= 1))
+                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus akun ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded transition">Hapus</button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

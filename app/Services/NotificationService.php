@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\User;
 use App\Models\Notification;
@@ -93,6 +94,46 @@ class NotificationService
         return $results;
     }
 
+    public function sendProjectDeadlineReminder(Project $project, User $director, int $daysBefore): bool
+    {
+        if (!$director->phone || !$project->deadline || in_array($project->status, ['done', 'completed', 'rejected'], true)) {
+            return false;
+        }
+
+        $meta = $this->notificationMeta([
+            'notification_type' => 'project_deadline_reminder',
+            'reminder_days_before' => $daysBefore,
+            'reminder_date' => now(config('app.timezone', 'Asia/Jakarta'))->toDateString(),
+        ]);
+
+        $title = "Reminder H-{$daysBefore} Deadline Proyek";
+
+        if ($this->projectReminderAlreadyRecorded($project, $director, 'whatsapp', $daysBefore, $title)) {
+            return false;
+        }
+
+        $message = $this->buildDirectorProjectReminderMessage($project, $director, $daysBefore);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $this->fonnteToken,
+            ])->post($this->fonnteUrl, [
+                'target' => $director->phone,
+                'message' => $message,
+            ]);
+
+            $success = $response->successful();
+            $this->recordProjectNotification($director, $title, $message, 'whatsapp', $success ? 'sent' : 'failed', $response->body(), $meta);
+
+            return $success;
+        } catch (Throwable $e) {
+            Log::error('Director project deadline WhatsApp error: ' . $e->getMessage());
+            $this->recordProjectNotification($director, $title, $message, 'whatsapp', 'failed', $e->getMessage(), $meta);
+
+            return false;
+        }
+    }
+
     private function reminderAlreadyRecorded(ProjectTask $task, string $channel, int $daysBefore): bool
     {
         return Notification::query()
@@ -101,6 +142,20 @@ class NotificationService
             ->where('notification_type', 'deadline_reminder')
             ->where('reminder_days_before', $daysBefore)
             ->whereDate('reminder_date', now(config('app.timezone', 'Asia/Jakarta'))->toDateString())
+            ->exists();
+    }
+
+    private function projectReminderAlreadyRecorded(Project $project, User $director, string $channel, int $daysBefore, string $title): bool
+    {
+        return Notification::query()
+            ->where('user_id', $director->id)
+            ->whereNull('project_task_id')
+            ->where('channel', $channel)
+            ->where('title', $title)
+            ->where('notification_type', 'project_deadline_reminder')
+            ->where('reminder_days_before', $daysBefore)
+            ->whereDate('reminder_date', now(config('app.timezone', 'Asia/Jakarta'))->toDateString())
+            ->where('message', 'like', '%' . $project->name . '%')
             ->exists();
     }
 
@@ -146,6 +201,26 @@ class NotificationService
                "*{$task->title}*\n" .
                "Deadline: {$deadline}\n\n" .
                "Segera selesaikan tugas Anda!\n\n" .
+               "_Pesan otomatis dari sistem Ninama_";
+    }
+
+    private function buildDirectorProjectReminderMessage(Project $project, User $director, int $daysBefore): string
+    {
+        $urgency = $daysBefore <= 1 ? 'URGENT' : 'PENGINGAT';
+        $deadline = $project->deadline->format('d/m/Y');
+        $category = $project->category ? ucfirst($project->category) : '-';
+        $progress = number_format((float) ($project->progress ?? 0), 0, ',', '.');
+
+        return "*{$urgency} - DEADLINE PROYEK H-{$daysBefore}*\n\n" .
+               "Halo {$director->name},\n\n" .
+               "Proyek berikut mendekati deadline:\n" .
+               "*{$project->name}*\n" .
+               "Customer: " . ($project->customer?->company ?? $project->client_name ?? '-') . "\n" .
+               "Bidang: {$category}\n" .
+               "Progress: {$progress}%\n" .
+               "Deadline: {$deadline}\n\n" .
+               "Silakan pantau proyek melalui dashboard direktur:\n" .
+               config('app.url') . "/direktur/dashboard\n\n" .
                "_Pesan otomatis dari sistem Ninama_";
     }
 
@@ -309,6 +384,24 @@ class NotificationService
         return Notification::create([
             'user_id' => $user->id,
             'project_task_id' => $task->id,
+            'title' => $title,
+            'message' => $message,
+            'channel' => $channel,
+            'status' => $status,
+            'notification_type' => $meta['notification_type'],
+            'reminder_days_before' => $meta['reminder_days_before'],
+            'reminder_date' => $meta['reminder_date'],
+            'response_log' => $responseLog,
+        ]);
+    }
+
+    private function recordProjectNotification(User $user, string $title, string $message, string $channel, string $status, ?string $responseLog = null, array $meta = []): Notification
+    {
+        $meta = $this->notificationMeta($meta);
+
+        return Notification::create([
+            'user_id' => $user->id,
+            'project_task_id' => null,
             'title' => $title,
             'message' => $message,
             'channel' => $channel,

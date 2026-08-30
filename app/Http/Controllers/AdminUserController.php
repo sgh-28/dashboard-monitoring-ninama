@@ -17,21 +17,27 @@ class AdminUserController extends Controller
     {
         // Ambil user internal (pegawai, project manager, dan marketing)
         $users = User::whereHas('role', function($q) {
-                $q->whereIn('name', ['pegawai', 'project_manager', 'marketing']);
+                $q->whereIn('name', ['pegawai', 'project_manager', 'marketing', 'direktur']);
             })
             ->with('role')
             ->orderBy('name')
             ->get();
 
-        return view('admin.users.index', compact('users'));
+        $directorCount = User::whereHas('role', fn($q) => $q->where('name', 'direktur'))->count();
+
+        return view('admin.users.index', compact('users', 'directorCount'));
     }
 
     public function create()
     {
-        $roleNames = ['pegawai', 'project_manager', 'marketing'];
+        $roleNames = ['pegawai', 'project_manager', 'marketing', 'direktur'];
 
         if (User::whereHas('role', fn($q) => $q->where('name', 'marketing'))->exists()) {
-            $roleNames = ['pegawai', 'project_manager'];
+            $roleNames = array_values(array_diff($roleNames, ['marketing']));
+        }
+
+        if (User::whereHas('role', fn($q) => $q->where('name', 'direktur'))->exists()) {
+            $roleNames = array_values(array_diff($roleNames, ['direktur']));
         }
 
         $roles = Role::whereIn('name', $roleNames)->get();
@@ -61,10 +67,21 @@ class AdminUserController extends Controller
                 ->withErrors(['role_id' => 'Akun marketing hanya boleh 1 akun untuk semua bidang.']);
         }
 
+        if ($role?->name === 'direktur' && User::whereHas('role', fn($q) => $q->where('name', 'direktur'))->exists()) {
+            return back()
+                ->withInput()
+                ->withErrors(['role_id' => 'Akun direktur hanya boleh 1 akun.']);
+        }
+
         $rawPassword = $validated['password'];
         $validated['password'] = Hash::make($validated['password']);
         $validated['bidang'] = $needsBidang ? $validated['bidang'] : null;
-        $validated['jabatan'] = $isProjectManager ? 'Project Management' : ($isPegawai ? $validated['jabatan'] : 'Marketing');
+        $validated['jabatan'] = match (true) {
+            $isProjectManager => 'Project Management',
+            $isPegawai => $validated['jabatan'],
+            $role?->name === 'marketing' => 'Marketing',
+            default => null,
+        };
 
         $user = User::create($validated);
 
@@ -93,7 +110,7 @@ class AdminUserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::whereIn('name', ['pegawai', 'project_manager', 'marketing'])->get();
+        $roles = Role::whereIn('name', ['pegawai', 'project_manager', 'marketing', 'direktur'])->get();
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
@@ -109,7 +126,7 @@ class AdminUserController extends Controller
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'bidang' => [$needsBidang ? 'required' : 'nullable', 'in:web,internet,cctv'],
             'jabatan' => [$isPegawai ? 'required' : 'nullable', 'string', 'max:255'],
         ]);
@@ -120,6 +137,12 @@ class AdminUserController extends Controller
                 ->withErrors(['role_id' => 'Akun marketing hanya boleh 1 akun untuk semua bidang.']);
         }
 
+        if ($role?->name === 'direktur' && User::where('id', '!=', $user->id)->whereHas('role', fn($q) => $q->where('name', 'direktur'))->exists()) {
+            return back()
+                ->withInput()
+                ->withErrors(['role_id' => 'Akun direktur hanya boleh 1 akun.']);
+        }
+
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
@@ -127,7 +150,12 @@ class AdminUserController extends Controller
         }
 
         $validated['bidang'] = $needsBidang ? $validated['bidang'] : null;
-        $validated['jabatan'] = $isProjectManager ? 'Project Management' : ($isPegawai ? $validated['jabatan'] : 'Marketing');
+        $validated['jabatan'] = match (true) {
+            $isProjectManager => 'Project Management',
+            $isPegawai => $validated['jabatan'],
+            $role?->name === 'marketing' => 'Marketing',
+            default => null,
+        };
 
         $user->update($validated);
 
@@ -138,6 +166,10 @@ class AdminUserController extends Controller
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
+        }
+
+        if (($user->role?->name ?? '') === 'direktur' && User::whereHas('role', fn($q) => $q->where('name', 'direktur'))->count() <= 1) {
+            return back()->with('error', 'Akun direktur utama tidak dapat dihapus karena minimal harus ada 1 akun direktur.');
         }
 
         $user->delete();

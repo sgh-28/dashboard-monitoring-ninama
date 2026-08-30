@@ -12,6 +12,7 @@ return new class extends Migration
     {
         $projectManagerRole = Role::firstOrCreate(['name' => 'project_manager']);
         $marketingRole = Role::firstOrCreate(['name' => 'marketing']);
+        Role::firstOrCreate(['name' => 'direktur']);
 
         User::where('jabatan', 'Project Management')
             ->whereIn('bidang', ['web', 'internet', 'cctv'])
